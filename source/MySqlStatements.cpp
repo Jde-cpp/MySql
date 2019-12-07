@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "MySqlStatements.h"
 
 namespace Jde::DB::MySql::Sql

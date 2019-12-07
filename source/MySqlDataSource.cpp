@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "MySqlDataSource.h"
 #include "MySqlRow.h"
 #include "../../Framework/source/db/DBException.h"
@@ -66,7 +65,7 @@ namespace Jde::DB::MySql
 					stringValue = StringUtilities::Replace( stringValue, "T", " " );
 					stringValue = StringUtilities::Replace( stringValue, "Z", "" );
 					double fraction = (double)date.Nanos()/Chrono::TimeSpan::NanosPerSecond;
-					auto fractionString = fmt::format( "{}", fraction ).substr( 1 );//:.6
+					auto fractionString = fmt::format( "{:g}", fraction ).substr( 1 );//:.6
 					string value = fmt::format( "{}{}", stringValue, fractionString );//:.6
 					return mysqlx::Value( value );
 				}

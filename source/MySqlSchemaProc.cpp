@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "MySqlSchemaProc.h"
 #include "MySqlDataSource.h"
 #include "MySqlStatements.h"

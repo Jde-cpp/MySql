@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/duffyj/code/libraries/spdlog/include/",
+                "/home/duffyj/code/libraries/boostorg/boost_1_71_0",
+					 "/home/duffyj/code/libraries/json/include",
+					 "/home/duffyj/code/libraries/mysql/include/mysqlx"
+            ],
+				"defines": [],
+				"forcedInclude": ["${workspaceFolder}/pc.h"],
+				"cppStandard": "c++17",
+            "compilerPath": "/usr/bin/g++-8",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

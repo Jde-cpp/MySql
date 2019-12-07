@@ -13,9 +13,4 @@
 #include "../../Framework/source/Exception.h"
 #include "../../Framework/source/DateTime.h"
 #include "../../Framework/source/StringUtilities.h"
-#include <xdevapi.h>	///home/duffyj/code/libraries/mysql/include/mysqlx/
-
-namespace Jde
-{
-	using std::vector;
-}
+#include <xdevapi.h>	
