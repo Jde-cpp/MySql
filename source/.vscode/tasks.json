@@ -1,10 +1,10 @@
 {//https://go.microsoft.com/fwlink/?LinkId=733558
 	"version": "2.0.0",
-	"tasks": 
+	"tasks":
 	[{
 		"label": "build",
 		"type": "shell",
-		"command": "tput reset; ./buildc.sh",
+		"command": "tput reset; ../../Framework/cmake/buildc.sh ${workspaceFolder}",
 		"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
 		"group": { "kind": "build", "isDefault": true }
 	},

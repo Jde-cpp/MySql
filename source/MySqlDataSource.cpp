@@ -55,7 +55,7 @@ namespace Jde::DB::MySql
 			}
 			case EDataValue::DateOptional:
 			{
-				var value = std::get<optional<DBDateTime>>( dataValue ); 
+				var value = std::get<optional<DBDateTime>>( dataValue );
 				if( !value.has_value() )
 					return mysqlx::Value();
 				else
@@ -64,10 +64,24 @@ namespace Jde::DB::MySql
 					auto stringValue = date.ToIsoString();
 					stringValue = StringUtilities::Replace( stringValue, "T", " " );
 					stringValue = StringUtilities::Replace( stringValue, "Z", "" );
-					double fraction = (double)date.Nanos()/Chrono::TimeSpan::NanosPerSecond;
-					auto fractionString = fmt::format( "{:g}", fraction ).substr( 1 );//:.6
-					string value = fmt::format( "{}{}", stringValue, fractionString );//:.6
-					return mysqlx::Value( value );
+					//double fraction = (double)date.Nanos()/Chrono::TimeSpan::NanosPerSecond;
+					//auto fractionString = fmt::format( "{:g}", fraction ).substr( 1 );//:.6
+					uint nanos = value.value().time_since_epoch().count();
+					constexpr uint NanosPerSecond = std::chrono::nanoseconds(1s).count();
+					const double remainingNanos = nanos%NanosPerSecond;
+				 	double fraction = remainingNanos/NanosPerSecond;
+					var rounded = std::round( fraction*1000000 );
+					var fraction2 = rounded/1000000;
+					ostringstream os;
+					os << std::setprecision(6) << std::fixed << fraction2;
+					//os << fraction2;
+					//DBG0( os.str() );
+					auto fractionString = os.str().substr(1);//fraction<.000001 ? ".0" : fmt::format( "{:g}", fraction ).substr( 1 );//:.6
+
+					string value2 = fmt::format( "{}{}", stringValue, fractionString );//:.6
+					if( value2.find('e')!=string::npos )
+						ERR( "{} has {} for {} returning {}, nanos={}"sv, value2, fractionString, fraction, value2, value.value().time_since_epoch().count() );//2019-12-13 20:43:04.305e-06 has .305e-06 for 9.30500e-06 returning 2019-12-13 20:43:04.305e-06, nanos=1576269784000009305
+					return mysqlx::Value( value2 );
 				}
 					// ? mysqlx::Value( std::chrono::duration_cast<std::chrono::microseconds>( value.value()-Chrono::Epoch() ).count() )
 					// : mysqlx::Value();//FROM_UNIXTIME(1366790400)
@@ -103,7 +117,7 @@ namespace Jde::DB::MySql
 				f( MySqlRow(row) );
 		}
 		catch( const ::mysqlx::Error& e )
-		{ 
+		{
 			THROW2( DBException(e, sql, pValues) );
 		}
 	}
@@ -155,7 +169,7 @@ namespace Jde::DB::MySql
 		}
 		return 1;//wari
 	}
-/*	std::variant MySqlDataSource::Fetch( string_view sql, std::variant parameters )noexcept(false) 
+/*	std::variant MySqlDataSource::Fetch( string_view sql, std::variant parameters )noexcept(false)
 	{
 		mysqlx::Session* pSession = GetSession();
 		auto statement = pSession->sql( sql );
