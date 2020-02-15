@@ -22,6 +22,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeaderFile>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ForcedIncludeFiles>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ForcedIncludeFiles>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -63,14 +67,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\mysql-connector-c++-8.0.13-winx64\include\mysqlx;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <TargetName>Jde.DB.$(ProjectName)</TargetName>
     <LibraryPath>C:\code\libraries\mysql-connector-c++-8.0.13-winx64\lib64\vs14;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\mysql-connector-c++-8.0.13-winx64\include\mysqlx;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <TargetName>Jde.DB.$(ProjectName)</TargetName>
     <LibraryPath>C:\code\libraries\mysql-connector-c++-8.0.13-winx64\lib64\vs14;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -86,6 +90,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4251;4275</DisableSpecificWarnings>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,6 +113,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4251;4275</DisableSpecificWarnings>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
