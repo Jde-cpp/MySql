@@ -53,26 +53,26 @@ namespace Jde::DB::MySql
 	{
 		switch( value.getType() )
 		{
-			case mysqlx::common::Value::Type::VNULL:
+			case mysqlx::Value::Type::VNULL:
 				return DataValue{nullptr};
-			case mysqlx::common::Value::Type::STRING:
+			case mysqlx::Value::Type::STRING:
 				return DataValue{ value.get<string>() };
-			case mysqlx::common::Value::Type::BOOL:
-				return DataValue{ value.get<bool>() };  
+			case mysqlx::Value::Type::BOOL:
+				return DataValue{ value.get<bool>() };
 			break;
-			case mysqlx::common::Value::Type::INT64:
+			case mysqlx::Value::Type::INT64:
 				return DataValue{ static_cast<_int>(value.get<_int>()) };
 			break;
-			case mysqlx::common::Value::Type::UINT64:
-				return DataValue{ value.get<uint>() };  
+			case mysqlx::Value::Type::UINT64:
+				return DataValue{ value.get<uint>() };
 			break;
-			case mysqlx::common::Value::Type::DOUBLE:
-				return DataValue{ optional<double>(value.get<double>()) };  
+			case mysqlx::Value::Type::DOUBLE:
+				return DataValue{ optional<double>(value.get<double>()) };
 			break;
 			default:
 				THROW2( LogicException("{} dataValue not implemented", value.getType()) );
 		}
-		return DataValue{ nullptr };  
+		return DataValue{ nullptr };
 	}
 
 	DataValue MySqlRow::operator[]( uint position )const
@@ -81,7 +81,7 @@ namespace Jde::DB::MySql
 	}
 
 	_int MySqlRow::GetInt( uint position )const
-	{ 
+	{
 		_int intValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{	intValue = value.get<_int>(); }
@@ -101,14 +101,14 @@ namespace Jde::DB::MySql
 	}
 
 	uint MySqlRow::GetUInt( uint position )const
-	{ 
+	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try
 		{
-			return value.get<uint>(); 
+			return value.get<uint>();
 		}
 		catch( const ::mysqlx::Error& )
-		{ 
+		{
 			THROW2( DBException("Could not convert position {} - {} to an uint.", position, GetTypeName(value)) );
 		}
 		return 0;//no-op
@@ -121,21 +121,21 @@ namespace Jde::DB::MySql
 
 	optional<uint> MySqlRow::GetUIntOpt( uint position )const
 	{
-		return _row[static_cast<mysqlx::col_count_t>(position)].getType()==mysqlx::Value::Type::VNULL ? optional<uint>() : GetUInt( position ); 
+		return _row[static_cast<mysqlx::col_count_t>(position)].getType()==mysqlx::Value::Type::VNULL ? optional<uint>() : GetUInt( position );
 	}
 
 	const std::string MySqlRow::GetString( uint position )const
-	{ 
+	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try
 		{
-			return value.getType()==mysqlx::Value::Type::VNULL ? string() : value.get<string>(); 
+			return value.getType()==mysqlx::Value::Type::VNULL ? string() : value.get<string>();
 		}
 		catch( const ::mysqlx::Error& )
-		{ 
+		{
 			THROW2( DBException("Could not convert position {} - {} to an string.", position, GetTypeName(value)) );
 		}
-		return std::string(); 
+		return std::string();
 	}
 
 	double MySqlRow::GetDouble( uint position )const
@@ -147,14 +147,13 @@ namespace Jde::DB::MySql
 			doubleValue = value.get<double>();
 		}
 		catch( const ::mysqlx::Error& )
-		{ 
+		{
 			THROW2( DBException("Could not convert position {} - {} to an double.", position, GetTypeName(value)) );
 		}
-		return doubleValue; 
+		return doubleValue;
 	}
 	std::optional<double> MySqlRow::GetDoubleOpt( uint position )const
 	{
-		std::optional<double> doubleValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		return value.isNull() ? std::optional<double>() : std::optional<double>( GetDouble(position) );
 	}
@@ -176,7 +175,7 @@ namespace Jde::DB::MySql
 			}
 			else
 				dateTimeValue = DBClock::from_time_t( GetInt(position) );
-			
+
 			//	THROW2( DBException("Expected DBType for datetime to be uint, got {}.", value.GetTypeName()) );
 /*			if( value.getType()!=::mysqlx::Value::Type::STRING )
 				THROW2( DBException("Expected DBType for datetime to be 6, got {}.", value.getType()) );
@@ -193,7 +192,7 @@ namespace Jde::DB::MySql
 /*			const Jde::DateTime mysqlEpoch( 1980, 1, 1 );
 			const Jde::DateTime time( 2018, 2, 12, 8, 49, 33 );
 			var m2 = std::chrono::duration_cast<std::chrono::milliseconds>( time.GetTimePoint() - mysqlEpoch.GetTimePoint() ).count();
-			
+
 			auto byteSize = value.getRawBytes();
 			if( byteSize.second!=6 )
 				THROW2( DBException("Expected 6 bytes for datetime, got {}.", position, byteSize.second) );
@@ -217,34 +216,34 @@ namespace Jde::DB::MySql
 			uint8_t day = bytes[2];
 			day <<= 2; day >>= 3; //clear 17,18, 24
 			uint16_t hour = bytes[2] << 8 | bytes[3]; //17-32
-			hour <<= 7; hour >>= 12; //clear 17-24, 28-32, 
+			hour <<= 7; hour >>= 12; //clear 17-24, 28-32,
 			uint16_t minute = bytes[3] << 8 | bytes[4]; //24-40
-			minute <<= 4; minute >>= 10; //clear 17-23, 28-32, 
+			minute <<= 4; minute >>= 10; //clear 17-23, 28-32,
 			uint16_t second = bytes[4]; //40-48
-			second <<= 2; second >>= 2; //clear 40,41 
+			second <<= 2; second >>= 2; //clear 40,41
 			uint8_t millisecond = bytes[5];
 			const Jde::DateTime time2( year, month, day, hour, minute, second );
-			
-			
-			
+
+
+
 			//dateTimeValue = mysqlEpoch.GetTimePoint() + std::chrono::milliseconds( milliseconds );
 			Jde::DateTime myx( dateTimeValue );
 			GetDefaultLogger()->debug( myx.ToIsoString() ); //2018-02-12 08:49:33
 			*/
 		}
 		catch( const ::mysqlx::Error& )
-		{ 
+		{
 			THROW2( DBException("Could not convert position {} - {} to an date time.", position, GetTypeName(value)) );
 		}
 		return dateTimeValue;
 	}
-	
+
 	std::optional<DBDateTime> MySqlRow::GetDateTimeOpt( uint position )const
 	{
 		std::optional<DBDateTime> dateTimeValue;
 		var& value = GetIntOpt( position );
 		if( value.has_value() )
 			dateTimeValue = DBClock::from_time_t( value.value() );
-		return dateTimeValue; 
-	}	
+		return dateTimeValue;
+	}
 }

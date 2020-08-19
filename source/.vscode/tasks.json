@@ -22,7 +22,7 @@
 	{
 		"label": "rebuild",
 		"type": "shell",
-		"command": "tput reset;./buildc.sh asan 1",
+		"command": "tput reset;../../Framework/cmake/buildc.sh ${workspaceFolder} asan 1",
 		"problemMatcher": {"owner": "cpp", "fileLocation": ["relative", "${workspaceFolder}"],
 			"pattern": {
 				"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
