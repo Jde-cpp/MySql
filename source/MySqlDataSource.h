@@ -5,7 +5,7 @@
 #include "../../Framework/source/db/DataType.h"
 #include "../../Framework/source/db/DataSource.h"
 
-extern "C" JDE_MYSQL_VISIBILITY Jde::DB::IDataSource* GetDataSource(); 
+extern "C" JDE_MYSQL_VISIBILITY Jde::DB::IDataSource* GetDataSource();
 
 namespace Jde::DB::MySql
 {
@@ -16,6 +16,8 @@ namespace Jde::DB::MySql
 		//std::variant Fetch( string_view sql, std::variant parameters )noexcept(false) override;
 		//template<typename ...TColumns, typename ...TParameters>
 		//void Select( string_view sql, std::function<void(TColumns...)> f, TParameters... );
+		uint Scaler( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)override;
+		optional<uint> ScalerOptional( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)override;
 		uint Execute( string_view sql )override;
 		uint Execute( string_view sql, const std::vector<DataValue>& parameters, bool log )override;
 		uint Execute( string_view sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log ) override;
@@ -23,6 +25,9 @@ namespace Jde::DB::MySql
 		uint ExecuteProc( string_view sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )override;
 		void Select( string_view sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& values, bool log )noexcept(false) override;
 		void Select( string_view sql, std::function<void(const IRow&)> f )override;
+
+		sp<ISchemaProc> SchemaProc()noexcept override;
+		string Catalog()noexcept override;
 	private:
 		void Select( string_view sql, std::function<void(const IRow&)> f, const std::vector<DataValue>* pValues, bool log )noexcept(false);
 		uint Execute2( string_view sql, bool log, const std::vector<DataValue>* pParameters=nullptr, std::function<void(const IRow&)>* pFunction=nullptr, bool isStoredProcedure=false );
@@ -35,20 +40,20 @@ namespace Jde::DB::MySql
 		return std::make_tuple( f( std::get<Is>(t) )... );
 	}
 
-	
-	template <typename T> 
+
+	template <typename T>
 	T read(std::istream& is)
 	{
-		T t; 
-		is >> t; 
+		T t;
+		is >> t;
 		return t;
 	}
 
-	template<class T, class... Args, std::size_t... Is> 
+	template<class T, class... Args, std::size_t... Is>
 	T read2( std::istream& is, indices<Is...> )
 	{
-		T t; 
-		is >> t; 
+		T t;
+		is >> t;
 		return t;
 	}
 
@@ -57,8 +62,8 @@ namespace Jde::DB::MySql
 	{
 		return std::make_tuple( read<Args>(is)... );
 	}
-	
-	
+
+
 	template<typename... TColumns, std::size_t... Is>
 	std::tuple<TColumns...> extract( const mysqlx::Row& row, std::index_sequence<Is...> )
 	{
@@ -120,7 +125,7 @@ namespace Jde::DB::MySql
 			}
 		}
 		catch( ::mysqlx::Error e )
-		{ 
+		{
 			throw;
 		}
 	}*/

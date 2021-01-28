@@ -19,6 +19,7 @@ target_precompile_headers(Jde.MySql
 	<spdlog/spdlog.h>
 	<spdlog/sinks/basic_file_sink.h>
 	<spdlog/fmt/ostr.h>
+	<nlohmann/json.hpp>
 	"../../Framework/source/Exception.h"
 	"../../Framework/source/DateTime.h"
 	"../../Framework/source/StringUtilities.h"

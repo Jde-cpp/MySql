@@ -6,63 +6,91 @@
 
 namespace Jde::DB::MySql
 {
-	MapPtr<string,Types::Table> MySqlSchemaProc::LoadTables( IDataSource& ds, string_view catalog )noexcept(false)
+	MapPtr<string,Table> MySqlSchemaProc::LoadTables( sv catalog )noexcept(false)
 	{
-		auto pTables = make_shared<map<string,Types::Table>>();
+		string catalogLocal;
+		if( catalog.empty() )
+			catalog = catalogLocal = _pDataSource->Catalog();
+		auto pTables = make_shared<map<string,Table>>();
 		//std::function<void(const string& name, const string& COLUMN_NAME, int ordinalPosition, const string& dflt, int isNullable, const string& type, int maxLength, int isIdentity, int isId, int NumericPrecision, int NumericScale)>
 		auto result2 = [&]( const string& name, const string& COLUMN_NAME, _int ordinalPosition, const string& dflt, string isNullable, const string& type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale )
 		{
-			auto& table = pTables->emplace( name, Types::Table{catalog,name} ).first->second;
+			auto& table = pTables->emplace( name, Table{catalog,name} ).first->second;
 			table.Columns.resize( ordinalPosition );
 
-			table.Columns[ordinalPosition-1] = make_shared<Types::Column>( name, ordinalPosition, dflt, isNullable!="NO", ToDataType(type), maxLength, isIdentity, isId, numericPrecision, numericScale );
+			table.Columns[ordinalPosition-1] = Column{ name, (uint)ordinalPosition, dflt, isNullable!="NO", ToDataType(type), maxLength.value_or(0), isIdentity!=0, isId!=0, numericPrecision, numericScale };
 		};
 		auto result = [&]( const IRow& row )
 		{
 			result2( row.GetString(0), row.GetString(1), row.GetInt(2), row.GetString(3), row.GetString(4), row.GetString(5), row.GetIntOpt(6), row.GetInt(7), row.GetInt(8), row.GetIntOpt(9), row.GetIntOpt(10) );
 		};
-		var sql = Sql::ColumnSql( false );  
+		var sql = Sql::ColumnSql( false );
 		//var sql = "select * from INFORMATION_SCHEMA.TABLES where catalog=:catalog";
-		GetDefaultLogger()->debug( sql ); 
+		//DBG( sql );
 		//Jde::DB::MySql::MySqlDataSource& dataSource = dynamic_cast<Jde::DB::MySql::MySqlDataSource&>( ds );
-		std::vector<DataValue> parameters{ "market"sv };
-		ds.Select( sql, result, parameters );
+		//std::vector<DataValue> parameters{ "market"sv };
+		_pDataSource->Select( sql, result, {catalog} );
 		//dataSource.Select( sql, result, {{"catalog","market"}} );
 		return pTables;
 	}
 
-/*	forward_list<Types::Index> LoadIndexes( IDataSource ds, map<string,Types::TablePtr_> tables, string_view schema )
+	vector<Index> MySqlSchemaProc::LoadIndexes( sv catalog, sv tableName )noexcept(false)
 	{
-		auto indexes = forward_list<Types::Index>();
-		std::function<void(const string& indexName, const string& tableName, bool unique, const string& columnName, bool primaryKey)> result = [&]( const string& indexName, const string& tableName, bool unique, const string& columnName, bool primaryKey )
+		string catalogLocal;
+		if( catalog.empty() )
+			catalog = catalogLocal = _pDataSource->Catalog();
+
+		vector<Index> indexes;
+		//std::function<void(const string& indexName, const string& tableName, bool unique, const string& columnName, bool primaryKey)>
+		auto result = [&]( const IRow& row )
 		{
-			auto pExisting = std::find_if( indexes.begin(), indexes.end(), [&indexName, &tableName](auto index){ index.Name==indexName && index.TableName==tableName; } );
+			uint i=0;
+			var tableName = row.GetString(i++); var indexName = row.GetString(i++); var columnName = row.GetString(i++); var unique = row.GetBit(i++)==0;
+
+			//var ordinal = row.GetUInt(i++); var dflt = row.GetString(i++);  //var primaryKey = row.GetBit(i);
+			vector<string>* pColumns;
+			auto pExisting = std::find_if( indexes.begin(), indexes.end(), [&](auto index){ return index.Name==indexName && index.TableName==tableName; } );
 			if( pExisting==indexes.end() )
 			{
 				bool clustered = false;//Boolean.Parse( row["CLUSTERED"].ToString() );
 				bool primaryKey = indexName=="PRIMARY";//Boolean.Parse( row["PRIMARY_KEY"].ToString() );
-				var pTable = tables.find( tableName );
-				if( pTable==tables.end() )
-					THROW2( LogicException("Could not find table '{}' for index '{}'.", tableName, indexName) );
-				indexes.emplace_front( pTable->second, indexName, clustered, unique, primaryKey );
+				//var pTable = tables.find( tableName );
+				//if( pTable==tables.end() )
+				//	THROW2( LogicException("Could not find table '{}' for index '{}'.", tableName, indexName) );
+				pColumns = &indexes.emplace_back( indexName, tableName, primaryKey, nullptr, unique, clustered ).Columns;
 			}
-
-			auto pColumn = pExisting->TablePtr->FindColumn( columnName );
-			if( pColumn==nullptr )
-				THROW2( LogicException("Could not find column '{}' for table '{}' for index '{}'.", columnName, tableName, indexName) );
-			if( primaryKey )
-				pColumn->SrrgtKey = DB::Types::SurrogateKey();
-			pExisting->Columns.push_back( pColumn );	
+			else
+				pColumns = &pExisting->Columns;
+			pColumns->push_back( columnName );
 		};
 
-		Jde::DB::MySql::MySqlDataSource& dataSource = dynamic_cast<Jde::DB::MySql::MySqlDataSource&>( ds );
-		dataSource.Select( Sql::IndexSql(false), result, schema );
+		std::vector<DataValue> values{catalog};
+		if( tableName.size() )
+			values.push_back( tableName );
+		_pDataSource->Select( Sql::IndexSql(tableName.size()), result, values, true );
 
 		return indexes;
 	}
-*/
 
-	DataType MySqlSchemaProc::ToDataType( string_view typeName )noexcept
+	flat_map<string,Procedure> MySqlSchemaProc::LoadProcs( string_view catalog )noexcept(false)
+	{
+		string catalogLocal;
+		if( catalog.empty() )
+			catalog = catalogLocal = _pDataSource->Catalog();
+		//std::vector<DataValue> params;
+		//if( catalog.size() )
+		//	params.emplace_back( catalog );
+		flat_map<string,Procedure> values;
+		auto fnctn = [&values]( const IRow& row )
+		{
+			string name = row.GetString(0);
+			values.try_emplace( name, Procedure{name} );
+		};
+		_pDataSource->Select( Sql::ProcSql(true), fnctn, {catalog}, true );
+		return values;
+	}
+
+	DataType MySqlSchemaProc::ToDataType( sv typeName )noexcept
 	{
 		DataType type{ DataType::None };
 		if(typeName=="datetime")
@@ -75,7 +103,7 @@ namespace Jde::DB::MySql
 			type=DataType::SmallFloat;
 		else if( typeName=="int" || typeName=="int(11)" )
 			type = DataType::Int;
-		else if( typeName=="int(10) unsigned" )
+		else if( typeName=="int(10) unsigned" || typeName=="int unsigned" )
 			type = DataType::UInt;
 		else if( typeName=="bigint(21) unsigned" || typeName=="bigint(20) unsigned" )
 			type = DataType::ULong;
@@ -89,7 +117,9 @@ namespace Jde::DB::MySql
 			type=DataType::Int16;
 		else if(typeName=="tinyint")
 			type=DataType::Int8;
-		else if(typeName=="uniqueidentifier")
+		else if( typeName=="tinyint unsigned" )
+			type=DataType::UInt8;
+		else if( typeName=="uniqueidentifier" )
 			type=DataType::Guid;
 		else if(typeName=="varbinary")
 			type=DataType::VarBinary;
@@ -117,15 +147,35 @@ namespace Jde::DB::MySql
 			GetDefaultLogger()->warn( "Unknown datatype({}).  need to implement, no big deal if not our table.", typeName );
 		return type;
 	}
-/*	Types::Schema LoadSchema( IDataSource& ds, string_view catalog )noexcept(false) override;
+
+	flat_map<string,ForeignKey> MySqlSchemaProc::LoadForeignKeys( sv catalog )noexcept(false)
+	{
+		string catalogLocal;
+		if( catalog.empty() )
+			catalog = catalogLocal = _pDataSource->Catalog();
+		flat_map<string,ForeignKey> fks;
+		auto result = [&]( const IRow& row )
+		{
+			uint i=0;
+			var name = row.GetString(i++); var fkTable = row.GetString(i++); var column = row.GetString(i++); var pkTable = row.GetString(i++); //var pkColumn = row.GetString(i++); var ordinal = row.GetUInt(i);
+			auto pExisting = fks.find( name );
+			if( pExisting==fks.end() )
+				fks.emplace( name, ForeignKey{name, fkTable, {column}, pkTable} );
+			else
+				pExisting->second.Columns.push_back( column );
+		};
+		_pDataSource->Select( Sql::ForeignKeySql(catalog.size()), result, {catalog}, true );
+		return fks;
+	}
+/*	Schema LoadSchema( IDataSource& ds, sv catalog )noexcept(false) override;
 	{
 
 	}
 
-	Types::Table MySqlSchemaProc::ToTable( const mysqlx::Table& mysqlTable )noexcept
+	Table MySqlSchemaProc::ToTable( const mysqlx::Table& mysqlTable )noexcept
 	{
-		
-		//return Types::Table( mysqlTable.);
+
+		//return Table( mysqlTable.);
 	}
 */
 }

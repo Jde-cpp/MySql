@@ -1,6 +1,7 @@
 #include "MySqlDataSource.h"
 #include "MySqlRow.h"
 #include "../../Framework/source/db/DBException.h"
+#include "MySqlSchemaProc.h"
 #define var const auto
 
 Jde::DB::IDataSource* GetDataSource()
@@ -141,6 +142,21 @@ namespace Jde::DB::MySql
 	{
 		return Execute2( sql, log, &parameters, &f, true );
 	}
+
+	uint MySqlDataSource::Scaler( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)
+	{
+		uint count = 0;
+		std::function<void(const IRow&)> fnctn = [&count](const IRow& row){ row >> count; };
+		Execute2( sql, true, &parameters, &fnctn, false );
+		return count;
+	}
+	optional<uint> MySqlDataSource::ScalerOptional( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)
+	{
+		optional<uint> value;
+		std::function<void(const IRow&)> f = [&value](var& row){ value = row.GetUIntOpt(0); };
+		Execute2( sql, true, &parameters, &f, false );
+		return value;
+	}
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
 	uint MySqlDataSource::Execute2( string_view sql, bool log, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProcedure )noexcept(false)
 	{
@@ -169,6 +185,21 @@ namespace Jde::DB::MySql
 		}
 		return 1;//wari
 	}
+
+	sp<ISchemaProc> MySqlDataSource::SchemaProc()noexcept
+	{
+		sp<IDataSource> p = shared_from_this();
+		return make_shared<MySqlSchemaProc>( p );
+	}
+
+	string MySqlDataSource::Catalog()noexcept
+	{
+		string db;
+		auto fnctn = [&db]( auto& row ){ row >> db; };
+		Select( "select database()", fnctn, {}, false );
+		return db;
+	}
+
 /*	std::variant MySqlDataSource::Fetch( string_view sql, std::variant parameters )noexcept(false)
 	{
 		mysqlx::Session* pSession = GetSession();
