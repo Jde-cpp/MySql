@@ -13,9 +13,9 @@ namespace Jde::DB::MySql
 			catalog = catalogLocal = _pDataSource->Catalog();
 		auto pTables = make_shared<map<string,Table>>();
 		//std::function<void(const string& name, const string& COLUMN_NAME, int ordinalPosition, const string& dflt, int isNullable, const string& type, int maxLength, int isIdentity, int isId, int NumericPrecision, int NumericScale)>
-		auto result2 = [&]( const string& name, const string& COLUMN_NAME, _int ordinalPosition, const string& dflt, string isNullable, const string& type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale )
+		auto result2 = [&]( sv tableName, sv name, _int ordinalPosition, sv dflt, string isNullable, sv type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale )
 		{
-			auto& table = pTables->emplace( name, Table{catalog,name} ).first->second;
+			auto& table = pTables->emplace( tableName, Table{catalog,tableName} ).first->second;
 			table.Columns.resize( ordinalPosition );
 
 			table.Columns[ordinalPosition-1] = Column{ name, (uint)ordinalPosition, dflt, isNullable!="NO", ToDataType(type), maxLength.value_or(0), isIdentity!=0, isId!=0, numericPrecision, numericScale };

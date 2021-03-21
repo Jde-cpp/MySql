@@ -9,28 +9,32 @@ extern "C" JDE_MYSQL_VISIBILITY Jde::DB::IDataSource* GetDataSource();
 
 namespace Jde::DB::MySql
 {
-	struct MySqlDataSource : public IDataSource
+	struct MySqlDataSource final: public IDataSource
 	{
 		shared_ptr<mysqlx::Session> GetSession()noexcept(false);
 
-		//std::variant Fetch( string_view sql, std::variant parameters )noexcept(false) override;
+		//std::variant Fetch( sv sql, std::variant parameters )noexcept(false) override;
 		//template<typename ...TColumns, typename ...TParameters>
-		//void Select( string_view sql, std::function<void(TColumns...)> f, TParameters... );
-		uint Scaler( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)override;
-		optional<uint> ScalerOptional( string_view sql, const std::vector<DataValue>& parameters )noexcept(false)override;
-		uint Execute( string_view sql )override;
-		uint Execute( string_view sql, const std::vector<DataValue>& parameters, bool log )override;
-		uint Execute( string_view sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log ) override;
-		uint ExecuteProc( string_view sql, const std::vector<DataValue>& parameters, bool log )override;
-		uint ExecuteProc( string_view sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )override;
-		void Select( string_view sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& values, bool log )noexcept(false) override;
-		void Select( string_view sql, std::function<void(const IRow&)> f )override;
+		//void Select( sv sql, std::function<void(TColumns...)> f, TParameters... );
+		uint Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
+		optional<uint> ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
+		uint Execute( sv sql )override;
+		optional<uint> TryExecute( sv sql )noexcept override;
+		uint Execute( sv sql, const vector<DataValue>& parameters, bool log )override;
+		optional<uint> TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept override;
+		uint Execute( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log ) override;
+		optional<uint> TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log=true )noexcept override;
+		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )override;
+		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )override;
+		void Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false) override;
+		void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false) override;
+		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept override;
 
 		sp<ISchemaProc> SchemaProc()noexcept override;
 		string Catalog()noexcept override;
 	private:
-		void Select( string_view sql, std::function<void(const IRow&)> f, const std::vector<DataValue>* pValues, bool log )noexcept(false);
-		uint Execute2( string_view sql, bool log, const std::vector<DataValue>* pParameters=nullptr, std::function<void(const IRow&)>* pFunction=nullptr, bool isStoredProcedure=false );
+		void Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false);
+		uint Execute2( sv sql, bool log, const vector<DataValue>* pParameters=nullptr, std::function<void(const IRow&)>* pFunction=nullptr, bool isStoredProcedure=false );
 	};
 
 	/*
@@ -103,7 +107,7 @@ namespace Jde::DB::MySql
 	}
 
 /*	template<typename ...TColumns, typename ...TParameters>
-	void MySqlDataSource::Select( string_view sql, std::function<void(TColumns...)> f, TParameters... params )
+	void MySqlDataSource::Select( sv sql, std::function<void(TColumns...)> f, TParameters... params )
 	{
 		//constexpr auto ColumnCount = (sizeof(TColumns) + ...);
 		auto pSession = GetSession();
