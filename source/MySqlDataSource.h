@@ -16,14 +16,14 @@ namespace Jde::DB::MySql
 		//std::variant Fetch( sv sql, std::variant parameters )noexcept(false) override;
 		//template<typename ...TColumns, typename ...TParameters>
 		//void Select( sv sql, std::function<void(TColumns...)> f, TParameters... );
-		uint Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
-		optional<uint> ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
+		//uint Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
+		//optional<uint> ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)override;
 		uint Execute( sv sql )override;
-		optional<uint> TryExecute( sv sql )noexcept override;
+		// optional<uint> TryExecute( sv sql )noexcept override;
+		// optional<uint> TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept override;
+		// optional<uint> TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log=true )noexcept override;
 		uint Execute( sv sql, const vector<DataValue>& parameters, bool log )override;
-		optional<uint> TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept override;
 		uint Execute( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log ) override;
-		optional<uint> TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log=true )noexcept override;
 		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )override;
 		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )override;
 		void Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false) override;
