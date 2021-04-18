@@ -2,6 +2,8 @@
 #include "MySqlRow.h"
 #include "../../Framework/source/db/DBException.h"
 #include "MySqlSchemaProc.h"
+#include "../../Framework/source/db/Database.h"
+
 #define var const auto
 
 Jde::DB::IDataSource* GetDataSource()
@@ -34,7 +36,7 @@ namespace Jde::DB::MySql
 			case EDataValue::String:
 				return mysqlx::Value( std::get<string>(dataValue) );
 			case EDataValue::StringView:
-				return mysqlx::Value( string(std::get<string_view>(dataValue)) );
+				return mysqlx::Value( string(std::get<sv>(dataValue)) );
 			case EDataValue::StringPtr:
 				return mysqlx::Value( string(*std::get<sp<string>>(dataValue)) );
 			case EDataValue::Bool:
@@ -91,19 +93,19 @@ namespace Jde::DB::MySql
 		THROW2( LogicException("dataValue index {} not implemented", dataValue.index()) );
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
-	bool MySqlDataSource::TrySelect( string_view sql, std::function<void(const IRow&)> f )noexcept
+/*	bool MySqlDataSource::TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept
 	{
 		return Try( [&]{Select( sql, f);} );
 	}
-	void MySqlDataSource::Select( string_view sql, std::function<void(const IRow&)> f )
+	void MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f )
 	{
 		Select( sql, f, nullptr, false );
 	}
-	void MySqlDataSource::Select( string_view sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false)
+	void MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false)
 	{
 		Select( sql, f, &values, log );
-	}
-	void MySqlDataSource::Select( string_view sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)
+	}*/
+	uint MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)
 	{
 		auto pSession = GetSession();
 		auto statement = pSession->sql( string(sql) );
@@ -112,25 +114,28 @@ namespace Jde::DB::MySql
 			for( var& value : *pValues )
 				statement.bind( ToMySqlValue( value ) );
 		}
+		uint count = 0;
 		try
 		{
 			auto result = statement.execute();
 			if( log )
 				DBLOG( sql, pValues );
 			std::list<mysqlx::Row> rows = result.fetchAll();
+			count = rows.size();
 			for( mysqlx::Row& row : rows )
 				f( MySqlRow(row) );
+			return count;
 		}
 		catch( const ::mysqlx::Error& e )
 		{
 			THROW2( DBException(e, sql, pValues) );
 		}
 	}
-	uint MySqlDataSource::Execute( string_view sql )
+	uint MySqlDataSource::Execute( sv sql )
 	{
-		return Execute2( sql, true );
+		return Execute( sql, nullptr, nullptr );
 	}
-	optional<uint> MySqlDataSource::TryExecute( string_view sql )noexcept
+/*	optional<uint> MySqlDataSource::TryExecute( sv sql )noexcept
 	{
 		optional<uint> result;
 		try
@@ -143,7 +148,7 @@ namespace Jde::DB::MySql
 		}
 		return result;
 	}
-	optional<uint> MySqlDataSource::TryExecute( string_view sql, const vector<DataValue>& parameters, bool log )noexcept
+	optional<uint> MySqlDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept
 	{
 		optional<uint> result;
 		try
@@ -156,15 +161,15 @@ namespace Jde::DB::MySql
 		}
 		return result;
 	}
-	uint MySqlDataSource::Execute( string_view sql, const vector<DataValue>& parameters, bool log )noexcept(false)
+*/	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)
 	{
-		return Execute2( sql, log, &parameters, nullptr );
+		return Execute( sql, &parameters, nullptr, false, log );
 	}
-	uint MySqlDataSource::Execute( string_view sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )
+/*	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )
 	{
 		return Execute2( sql, log, &parameters, &f );
 	}
-	optional<uint> MySqlDataSource::TryExecuteProc( string_view sql, const vector<DataValue>& parameters, bool log )noexcept
+	optional<uint> MySqlDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )noexcept
 	{
 		optional<uint> result;
 		try
@@ -176,35 +181,35 @@ namespace Jde::DB::MySql
 			e.Log();
 		}
 		return result;
-	}
-	uint MySqlDataSource::ExecuteProc( string_view sql, const vector<DataValue>& parameters, bool log )
+	}*/
+	uint MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )
 	{
-		return Execute2( sql, log, &parameters, nullptr, true );
+		return Execute( sql, &parameters, nullptr, true, log );
 	}
-	uint MySqlDataSource::ExecuteProc( string_view sql, const vector<DataValue>& parameters, function<void(const IRow&)> f, bool log )
+	uint MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, function<void(const IRow&)> f, bool log )
 	{
-		return Execute2( sql, log, &parameters, &f, true );
+		return Execute( sql, &parameters, &f, true, log );
 	}
 
-	uint MySqlDataSource::Scaler( string_view sql, const vector<DataValue>& parameters )noexcept(false)
+/*	uint MySqlDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		uint count = 0;
 		function<void(const IRow&)> fnctn = [&count](const IRow& row){ row >> count; };
 		Execute2( sql, true, &parameters, &fnctn, false );
 		return count;
 	}
-	optional<uint> MySqlDataSource::ScalerOptional( string_view sql, const vector<DataValue>& parameters )noexcept(false)
+	optional<uint> MySqlDataSource::ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		optional<uint> value;
 		function<void(const IRow&)> f = [&value](var& row){ value = row.GetUIntOpt(0); };
 		Execute2( sql, true, &parameters, &f, false );
 		return value;
-	}
+	}*/
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	uint MySqlDataSource::Execute2( string_view sql, bool log, const vector<DataValue>* pParameters, function<void(const IRow&)>* pFunction, bool isStoredProcedure )noexcept(false)
+	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log )noexcept(false)
 	{
 		auto pSession = GetSession();
-		string fullSql = isStoredProcedure ? fmt::format( "call {}", sql ) : string( sql );
+		string fullSql = isStoredProc ? fmt::format( "call {}", sql ) : string( sql );
 		auto statement = pSession->sql( fullSql );
 		if( pParameters )
 		{
@@ -220,7 +225,6 @@ namespace Jde::DB::MySql
 				for( mysqlx::Row& row : rows )
 					(*pFunction)( MySqlRow(row) );
 			}
-			return 1;
 		}
 		catch( const ::mysqlx::Error& e )
 		{
@@ -235,15 +239,15 @@ namespace Jde::DB::MySql
 		return make_shared<MySqlSchemaProc>( p );
 	}
 
-	string MySqlDataSource::Catalog()noexcept
+/*	string MySqlDataSource::Catalog()noexcept
 	{
 		string db;
 		auto fnctn = [&db]( auto& row ){ row >> db; };
 		Select( "select database()", fnctn, {}, false );
 		return db;
 	}
-
-/*	variant MySqlDataSource::Fetch( string_view sql, variant parameters )noexcept(false)
+*/
+/*	variant MySqlDataSource::Fetch( sv sql, variant parameters )noexcept(false)
 	{
 		mysqlx::Session* pSession = GetSession();
 		auto statement = pSession->sql( sql );

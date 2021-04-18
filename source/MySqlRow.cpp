@@ -124,7 +124,7 @@ namespace Jde::DB::MySql
 		return _row[static_cast<mysqlx::col_count_t>(position)].getType()==mysqlx::Value::Type::VNULL ? optional<uint>() : GetUInt( position );
 	}
 
-	const std::string MySqlRow::GetString( uint position )const
+	std::string MySqlRow::GetString( uint position )const
 	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try
@@ -137,7 +137,19 @@ namespace Jde::DB::MySql
 		}
 		return std::string();
 	}
-
+	CIString MySqlRow::GetCIString( uint position )const
+	{
+		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
+		try
+		{
+			return value.getType()==mysqlx::Value::Type::VNULL ? CIString{} : CIString{ value.get<string>() };
+		}
+		catch( const ::mysqlx::Error& )
+		{
+			THROW2( DBException("Could not convert position {} - {} to an string.", position, GetTypeName(value)) );
+		}
+		//return std::string();
+	}
 	double MySqlRow::GetDouble( uint position )const
 	{
 		double doubleValue;

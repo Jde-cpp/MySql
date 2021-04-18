@@ -2,6 +2,7 @@
 #include "MySqlDataSource.h"
 #include "MySqlStatements.h"
 #include "../../Framework/source/db/Row.h"
+#include "../../Framework/source/db/Syntax.h"
 #define var const auto
 
 namespace Jde::DB::MySql
@@ -10,7 +11,7 @@ namespace Jde::DB::MySql
 	{
 		string catalogLocal;
 		if( catalog.empty() )
-			catalog = catalogLocal = _pDataSource->Catalog();
+			catalog = catalogLocal = _pDataSource->Catalog( DB::MySqlSyntax{}.CatalogSelect() );
 		auto pTables = make_shared<map<string,Table>>();
 		//std::function<void(const string& name, const string& COLUMN_NAME, int ordinalPosition, const string& dflt, int isNullable, const string& type, int maxLength, int isIdentity, int isId, int NumericPrecision, int NumericScale)>
 		auto result2 = [&]( sv tableName, sv name, _int ordinalPosition, sv dflt, string isNullable, sv type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale )
@@ -38,7 +39,7 @@ namespace Jde::DB::MySql
 	{
 		string catalogLocal;
 		if( catalog.empty() )
-			catalog = catalogLocal = _pDataSource->Catalog();
+			catalog = catalogLocal = _pDataSource->Catalog( DB::MySqlSyntax{}.CatalogSelect() );
 
 		vector<Index> indexes;
 		//std::function<void(const string& indexName, const string& tableName, bool unique, const string& columnName, bool primaryKey)>
@@ -72,11 +73,11 @@ namespace Jde::DB::MySql
 		return indexes;
 	}
 
-	flat_map<string,Procedure> MySqlSchemaProc::LoadProcs( string_view catalog )noexcept(false)
+	flat_map<string,Procedure> MySqlSchemaProc::LoadProcs( sv catalog )noexcept(false)
 	{
 		string catalogLocal;
 		if( catalog.empty() )
-			catalog = catalogLocal = _pDataSource->Catalog();
+			catalog = catalogLocal = _pDataSource->Catalog( DB::MySqlSyntax{}.CatalogSelect() );
 		//std::vector<DataValue> params;
 		//if( catalog.size() )
 		//	params.emplace_back( catalog );
@@ -152,7 +153,7 @@ namespace Jde::DB::MySql
 	{
 		string catalogLocal;
 		if( catalog.empty() )
-			catalog = catalogLocal = _pDataSource->Catalog();
+			catalog = catalogLocal = _pDataSource->Catalog( DB::MySqlSyntax{}.CatalogSelect() );
 		flat_map<string,ForeignKey> fks;
 		auto result = [&]( const IRow& row )
 		{

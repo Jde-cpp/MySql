@@ -12,7 +12,8 @@ namespace Jde::DB::MySql
 	{
 		MySqlRow( const mysqlx::Row& row );
 		DataValue operator[]( uint position )const override;
-		const std::string GetString( uint position )const override;
+		CIString GetCIString( uint position )const override;
+		std::string GetString( uint position )const override;
 		bool GetBit( uint position )const override;
 		_int GetInt( uint position )const override;
 		int32_t GetInt32( uint position )const override{ return static_cast<int32_t>( GetInt(position) ); }
