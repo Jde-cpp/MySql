@@ -130,7 +130,7 @@ namespace Jde::DB::MySql
 			type=DataType::NText;
 		else if(typeName=="text")
 			type=DataType::Text;
-		else if(typeName=="char")
+		else if( typeName.starts_with("char") )
 			type=DataType::Char;
 		else if(typeName=="image")
 			type=DataType::Image;
