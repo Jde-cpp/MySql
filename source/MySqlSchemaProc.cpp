@@ -49,7 +49,7 @@ namespace Jde::DB::MySql
 			var tableName = row.GetString(i++); var indexName = row.GetString(i++); var columnName = row.GetString(i++); var unique = row.GetBit(i++)==0;
 
 			//var ordinal = row.GetUInt(i++); var dflt = row.GetString(i++);  //var primaryKey = row.GetBit(i);
-			vector<string>* pColumns;
+			vector<SchemaName>* pColumns;
 			auto pExisting = std::find_if( indexes.begin(), indexes.end(), [&](auto index){ return index.Name==indexName && index.TableName==tableName; } );
 			if( pExisting==indexes.end() )
 			{
