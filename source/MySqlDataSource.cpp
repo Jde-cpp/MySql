@@ -65,8 +65,8 @@ namespace Jde::DB::MySql
 				{
 					const Jde::DateTime date{ value.value() };
 					auto stringValue = date.ToIsoString();
-					stringValue = StringUtilities::Replace( stringValue, "T", " " );
-					stringValue = StringUtilities::Replace( stringValue, "Z", "" );
+					stringValue = Str::Replace( stringValue, "T", " " );
+					stringValue = Str::Replace( stringValue, "Z", "" );
 					//double fraction = (double)date.Nanos()/Chrono::TimeSpan::NanosPerSecond;
 					//auto fractionString = fmt::format( "{:g}", fraction ).substr( 1 );//:.6
 					uint nanos = value.value().time_since_epoch().count();

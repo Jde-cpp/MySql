@@ -34,3 +34,4 @@ source/.vscode/settings.json
 /source/.bin
 /source/.vs/MySql/v16
 /source/MySql.vcxproj.user
+source/.vscode/tasks.json

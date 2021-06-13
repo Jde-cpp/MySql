@@ -8,7 +8,8 @@ link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
 add_library( Jde.MySql SHARED MySqlDataSource.cpp MySqlRow.cpp MySqlSchemaProc.cpp  MySqlStatements.cpp )
 #######################################################
 include_directories( "$ENV{REPO_DIR}/mysql-connector-cpp/include/mysqlx" )
-target_link_libraries(Jde.MySql Threads::Threads)
+include_directories( "../../Public" )
+target_link_libraries(Jde.MySql)
 target_link_libraries(Jde.MySql mysqlcppconn8)
 #######################################################
 target_precompile_headers(Jde.MySql
@@ -20,8 +21,8 @@ target_precompile_headers(Jde.MySql
 	<spdlog/sinks/basic_file_sink.h>
 	<spdlog/fmt/ostr.h>
 	<nlohmann/json.hpp>
-	"../../Framework/source/Exception.h"
+	<jde/Exception.h>
 	"../../Framework/source/DateTime.h"
-	"../../Framework/source/StringUtilities.h"
+	<jde/Str.h>
 	<xdevapi.h>
 )
