@@ -18,7 +18,7 @@ namespace Jde::DB::MySql
 	{
 		try
 		{
-			auto pShared = new mysqlx::Session( ConnectionString );
+			auto pShared = new mysqlx::Session( ConnectionString() );
 			return shared_ptr<mysqlx::Session>( pShared );
 		}
 		catch( const mysqlx::Error& e )
@@ -239,6 +239,13 @@ namespace Jde::DB::MySql
 		return make_shared<MySqlSchemaProc>( p );
 	}
 
+	AsyncAwaitable MySqlDataSource::SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept
+	{
+		return AsyncAwaitable{ [ql=move(sql),params=move(parameters),log,f,this]()
+		{
+			return make_shared<uint>( Select(ql, f, &params, log) );
+		}};
+	}
 /*	string MySqlDataSource::Catalog()noexcept
 	{
 		string db;

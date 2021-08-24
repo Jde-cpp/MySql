@@ -10,7 +10,7 @@ namespace Jde::DB::MySql
 	struct MySqlDataSource final: public IDataSource
 	{
 		shared_ptr<mysqlx::Session> GetSession()noexcept(false);
-
+		void SetAsynchronous()noexcept(false) override{ THROW2("Not Implemented"); }
 		//std::variant Fetch( sv sql, std::variant parameters )noexcept(false) override;
 		//template<typename ...TColumns, typename ...TParameters>
 		//void Select( sv sql, std::function<void(TColumns...)> f, TParameters... );
@@ -25,6 +25,7 @@ namespace Jde::DB::MySql
 		//optional<uint> TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log=true )noexcept override;
 		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )override;
 		uint ExecuteProc( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )override;
+		AsyncAwaitable SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept override;
 		//void Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false) override;
 		//void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false) override;
 		//bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept override;
