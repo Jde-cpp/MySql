@@ -23,7 +23,7 @@ namespace Jde::DB::MySql
 		}
 		catch( const mysqlx::Error& e )
 		{
-			THROW2( Exception("Could not create mysql session - {}", e.what()) );
+			THROW2( "Could not create mysql session - {}", e.what() );
 		}
 	}
 
@@ -90,7 +90,7 @@ namespace Jde::DB::MySql
 					// : mysqlx::Value();//FROM_UNIXTIME(1366790400)
 			}
 		}
-		THROW2( LogicException("dataValue index {} not implemented", dataValue.index()) );
+		THROWX( LogicException("dataValue index {} not implemented", dataValue.index()) );
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
 /*	bool MySqlDataSource::TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept
@@ -128,7 +128,7 @@ namespace Jde::DB::MySql
 		}
 		catch( const ::mysqlx::Error& e )
 		{
-			THROW2( DBException(e, sql, pValues) );
+			THROWX( DBException(e, sql, pValues) );
 		}
 	}
 	uint MySqlDataSource::Execute( sv sql )
@@ -221,14 +221,14 @@ namespace Jde::DB::MySql
 			auto result = statement.execute();
 			if( pFunction )
 			{
-				list<mysqlx::Row> rows = result.fetchAll();
-				for( mysqlx::Row& row : rows )
+				auto rows = result.fetchAll();
+				for( const mysqlx::Row& row : rows )
 					(*pFunction)( MySqlRow(row) );
 			}
 		}
 		catch( const ::mysqlx::Error& e )
 		{
-			THROW2( DBException(e, fullSql, pParameters) );
+			THROWX( DBException(e, fullSql, pParameters) );
 		}
 		return 1;//wari
 	}

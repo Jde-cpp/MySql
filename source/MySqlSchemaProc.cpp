@@ -145,7 +145,7 @@ namespace Jde::DB::MySql
 		else if(typeName=="money")
 			type=DataType::Money;
 		else
-			GetDefaultLogger()->warn( "Unknown datatype({}).  need to implement, no big deal if not our table.", typeName );
+			WARN( "Unknown datatype({}).  need to implement, ok if not our table."sv, typeName );
 		return type;
 	}
 
