@@ -67,8 +67,6 @@ namespace Jde::DB::MySql
 					auto stringValue = date.ToIsoString();
 					stringValue = Str::Replace( stringValue, "T", " " );
 					stringValue = Str::Replace( stringValue, "Z", "" );
-					//double fraction = (double)date.Nanos()/Chrono::TimeSpan::NanosPerSecond;
-					//auto fractionString = fmt::format( "{:g}", fraction ).substr( 1 );//:.6
 					uint nanos = value.value().time_since_epoch().count();
 					constexpr uint NanosPerSecond = std::chrono::nanoseconds(1s).count();
 					const double remainingNanos = nanos%NanosPerSecond;
@@ -77,34 +75,19 @@ namespace Jde::DB::MySql
 					var fraction2 = rounded/1000000;
 					ostringstream os;
 					os << std::setprecision(6) << std::fixed << fraction2;
-					//os << fraction2;
-					//DBG0( os.str() );
-					auto fractionString = os.str().substr(1);//fraction<.000001 ? ".0" : fmt::format( "{:g}", fraction ).substr( 1 );//:.6
+					auto fractionString = os.str().substr(1);
 
 					string value2 = fmt::format( "{}{}", stringValue, fractionString );//:.6
 					if( value2.find('e')!=string::npos )
 						ERR( "{} has {} for {} returning {}, nanos={}"sv, value2, fractionString, fraction, value2, value.value().time_since_epoch().count() );//2019-12-13 20:43:04.305e-06 has .305e-06 for 9.30500e-06 returning 2019-12-13 20:43:04.305e-06, nanos=1576269784000009305
 					return mysqlx::Value( value2 );
 				}
-					// ? mysqlx::Value( std::chrono::duration_cast<std::chrono::microseconds>( value.value()-Chrono::Epoch() ).count() )
-					// : mysqlx::Value();//FROM_UNIXTIME(1366790400)
 			}
 		}
 		THROWX( LogicException("dataValue index {} not implemented", dataValue.index()) );
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
-/*	bool MySqlDataSource::TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept
-	{
-		return Try( [&]{Select( sql, f);} );
-	}
-	void MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f )
-	{
-		Select( sql, f, nullptr, false );
-	}
-	void MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false)
-	{
-		Select( sql, f, &values, log );
-	}*/
+
 	uint MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)
 	{
 		auto pSession = GetSession();
@@ -135,53 +118,11 @@ namespace Jde::DB::MySql
 	{
 		return Execute( sql, nullptr, nullptr );
 	}
-/*	optional<uint> MySqlDataSource::TryExecute( sv sql )noexcept
-	{
-		optional<uint> result;
-		try
-		{
-			result = Execute2( sql, true );
-		}
-		catch( const Exception& e )
-		{
-			e.Log();
-		}
-		return result;
-	}
-	optional<uint> MySqlDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept
-	{
-		optional<uint> result;
-		try
-		{
-			result = Execute( sql, parameters, log );
-		}
-		catch( const Exception& e )
-		{
-			e.Log();
-		}
-		return result;
-	}
-*/	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)
+	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)
 	{
 		return Execute( sql, &parameters, nullptr, false, log );
 	}
-/*	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log )
-	{
-		return Execute2( sql, log, &parameters, &f );
-	}
-	optional<uint> MySqlDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )noexcept
-	{
-		optional<uint> result;
-		try
-		{
-			result = ExecuteProc( sql, parameters, log );
-		}
-		catch( const Exception& e )
-		{
-			e.Log();
-		}
-		return result;
-	}*/
+
 	uint MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )
 	{
 		return Execute( sql, &parameters, nullptr, true, log );
@@ -191,20 +132,6 @@ namespace Jde::DB::MySql
 		return Execute( sql, &parameters, &f, true, log );
 	}
 
-/*	uint MySqlDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
-	{
-		uint count = 0;
-		function<void(const IRow&)> fnctn = [&count](const IRow& row){ row >> count; };
-		Execute2( sql, true, &parameters, &fnctn, false );
-		return count;
-	}
-	optional<uint> MySqlDataSource::ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)
-	{
-		optional<uint> value;
-		function<void(const IRow&)> f = [&value](var& row){ value = row.GetUIntOpt(0); };
-		Execute2( sql, true, &parameters, &f, false );
-		return value;
-	}*/
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
 	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log )noexcept(false)
 	{
@@ -246,26 +173,4 @@ namespace Jde::DB::MySql
 			return make_shared<uint>( Select(ql, f, &params, log) );
 		}};
 	}
-/*	string MySqlDataSource::Catalog()noexcept
-	{
-		string db;
-		auto fnctn = [&db]( auto& row ){ row >> db; };
-		Select( "select database()", fnctn, {}, false );
-		return db;
-	}
-*/
-/*	variant MySqlDataSource::Fetch( sv sql, variant parameters )noexcept(false)
-	{
-		mysqlx::Session* pSession = GetSession();
-		auto statement = pSession->sql( sql );
-		statement.bind( params );
-		mysqlx::SqlResult result = statement.execute();
-		RowList rows = result.fetchAll();
-		for( Row& row : rows )
-		{
-			tuple<TColumns...> tuple;
-			//f(  )
-			//mysqlx
-		}
-	}*/
 }
