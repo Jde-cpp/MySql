@@ -14,7 +14,7 @@ Jde::DB::IDataSource* GetDataSource()
 namespace Jde::DB::MySql
 {
 	using mysqlx::SessionOption;
-	shared_ptr<mysqlx::Session> MySqlDataSource::GetSession()noexcept(false)
+	α MySqlDataSource::GetSession()noexcept(false)->shared_ptr<mysqlx::Session>
 	{
 		try
 		{
@@ -27,7 +27,7 @@ namespace Jde::DB::MySql
 		}
 	}
 
-	mysqlx::Value ToMySqlValue( const DataValue& dataValue )
+	α ToMySqlValue( const DataValue& dataValue )noexcept(false)->mysqlx::Value
 	{
 		switch( (EDataValue)dataValue.index() )
 		{
@@ -88,7 +88,7 @@ namespace Jde::DB::MySql
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
 
-	uint MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)
+	α MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)->uint
 	{
 		auto pSession = GetSession();
 		auto statement = pSession->sql( string(sql) );
@@ -114,26 +114,26 @@ namespace Jde::DB::MySql
 			THROWX( DBException(e, sql, pValues) );
 		}
 	}
-	uint MySqlDataSource::Execute( sv sql )
+	α MySqlDataSource::Execute( sv sql )noexcept(false)->uint
 	{
 		return Execute( sql, nullptr, nullptr );
 	}
-	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)
+	α MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)->uint
 	{
 		return Execute( sql, &parameters, nullptr, false, log );
 	}
 
-	uint MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )
+	α MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )noexcept(false)->uint
 	{
 		return Execute( sql, &parameters, nullptr, true, log );
 	}
-	uint MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, function<void(const IRow&)> f, bool log )
+	α MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, function<void(const IRow&)> f, bool log )noexcept(false)->uint
 	{
 		return Execute( sql, &parameters, &f, true, log );
 	}
 
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	uint MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log )noexcept(false)
+	α MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log )noexcept(false)->uint
 	{
 		auto pSession = GetSession();
 		string fullSql = isStoredProc ? fmt::format( "call {}", sql ) : string( sql );
@@ -160,17 +160,17 @@ namespace Jde::DB::MySql
 		return 1;//wari
 	}
 
-	sp<ISchemaProc> MySqlDataSource::SchemaProc()noexcept
+	α MySqlDataSource::SchemaProc()noexcept->sp<ISchemaProc>
 	{
 		sp<IDataSource> p = shared_from_this();
 		return make_shared<MySqlSchemaProc>( p );
 	}
 
-	AsyncAwaitable MySqlDataSource::SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept
+	α MySqlDataSource::SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept->up<IAwaitable>
 	{
-		return AsyncAwaitable{ [ql=move(sql),params=move(parameters),log,f,this]()
+		return make_unique<AsyncAwaitable>( [ql=move(sql),params=move(parameters),log,f,this]()
 		{
 			return make_shared<uint>( Select(ql, f, &params, log) );
-		}};
+		});
 	}
 }
