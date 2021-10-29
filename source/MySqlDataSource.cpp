@@ -21,10 +21,7 @@ namespace Jde::DB::MySql
 			auto pShared = new mysqlx::Session( ConnectionString() );
 			return shared_ptr<mysqlx::Session>( pShared );
 		}
-		catch( const mysqlx::Error& e )
-		{
-			THROW2( "Could not create mysql session - {}", e.what() );
-		}
+		RETHROW( "Could not create mysql session" );
 	}
 
 	α ToMySqlValue( const DataValue& dataValue )noexcept(false)->mysqlx::Value
@@ -84,11 +81,11 @@ namespace Jde::DB::MySql
 				}
 			}
 		}
-		THROWX( LogicException("dataValue index {} not implemented", dataValue.index()) );
+		throw Exception{ SRCE_CUR, "dataValue index {} not implemented", dataValue.index() };
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
 
-	α MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)->uint
+	α MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log, const source_location& sl )noexcept(false)->uint
 	{
 		auto pSession = GetSession();
 		auto statement = pSession->sql( string(sql) );
@@ -109,9 +106,9 @@ namespace Jde::DB::MySql
 				f( MySqlRow(row) );
 			return count;
 		}
-		catch( const ::mysqlx::Error& e )
+		catch( ::mysqlx::Error& e )
 		{
-			THROWX( DBException(e, sql, pValues) );
+			throw DBException{ move(e), sql, pValues, sl };
 		}
 	}
 	α MySqlDataSource::Execute( sv sql )noexcept(false)->uint
@@ -133,7 +130,7 @@ namespace Jde::DB::MySql
 	}
 
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	α MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log )noexcept(false)->uint
+	α MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log, const source_location& sl )noexcept(false)->uint
 	{
 		auto pSession = GetSession();
 		string fullSql = isStoredProc ? fmt::format( "call {}", sql ) : string( sql );
@@ -153,9 +150,9 @@ namespace Jde::DB::MySql
 					(*pFunction)( MySqlRow(row) );
 			}
 		}
-		catch( const ::mysqlx::Error& e )
+		catch( ::mysqlx::Error& e )
 		{
-			THROWX( DBException(e, fullSql, pParameters) );
+			throw DBException{ move(e), fullSql, pParameters, sl };
 		}
 		return 1;//wari
 	}
