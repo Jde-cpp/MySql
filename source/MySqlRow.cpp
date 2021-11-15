@@ -68,7 +68,7 @@ namespace Jde::DB::MySql
 		else if( type==mysqlx::Value::Type::DOUBLE )
 			v = DataValue{ optional<double>(value.get<double>()) };
 		else
-			throw Jde::Exception{ SRCE_CUR, "{} dataValue not implemented", value.getType() };
+			throw Exception{ SRCE_CUR, ELogLevel::Debug, "{} dataValue not implemented", value.getType() };
 		return v;
 	}
 
