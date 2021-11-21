@@ -3,24 +3,19 @@
 #include "../../Framework/source/db/types/Table.h"
 #include "../../Framework/source/db/SchemaProc.h"
 
-namespace Jde::DB
+namespace Jde::DB{ struct IDataSource; }
+
+namespace Jde::DB::MySql
 {
-	struct IDataSource;
-namespace MySql
-{
-	struct MySqlSchemaProc final : public ISchemaProc
+	struct MySqlSchemaProc final : ISchemaProc
 	{
 		MySqlSchemaProc( sp<IDataSource> pDataSource ):
 			ISchemaProc{ pDataSource }
 		{}
-		MapPtr<string,Table> LoadTables( sv catalog )noexcept(false) override;
-		DataType ToDataType( sv name )noexcept override;
-		vector<Index> LoadIndexes( sv schema, sv tableName )noexcept(false) override;
-		flat_map<string,ForeignKey> LoadForeignKeys( sv catalog )noexcept(false) override;
-		flat_map<string,Procedure> LoadProcs( sv catalog={} )noexcept(false) override;
-		//Types::Table LoadTable( IDataSource& ds, sv catalog, sv tableName )noexcept(false) override;
-		//Types::Schema LoadSchema( IDataSource& ds, sv catalog )noexcept(false) override;
-
-		//static Types::Table ToTable( const mysqlx::Table& mysqlTable )noexcept;
+		α LoadTables( sv catalog )noexcept(false)->up<flat_map<string,Table>> override;
+		α ToType( sv name )noexcept->EType override;
+		α LoadIndexes( sv schema, sv tableName )noexcept(false)->vector<Index> override;
+		α LoadForeignKeys( sv catalog )noexcept(false)->flat_map<string,ForeignKey> override;
+		α LoadProcs( sv catalog={} )noexcept(false)->flat_map<string,Procedure> override;
 	};
-}}
+}

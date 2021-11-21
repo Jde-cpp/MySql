@@ -14,48 +14,50 @@ Jde::DB::IDataSource* GetDataSource()
 namespace Jde::DB::MySql
 {
 	using mysqlx::SessionOption;
-	α MySqlDataSource::GetSession()noexcept(false)->sp<mysqlx::Session>
+	α Session( str cs, SRCE )noexcept(false)->mysqlx::Session
 	{
 		try
 		{
-			auto pShared = new mysqlx::Session( ConnectionString() );
-			return sp<mysqlx::Session>( pShared );
+			return mysqlx::Session{ cs };
 		}
-		RETHROW( "Could not create mysql session" );
+		catch( std::exception& e )
+		{
+			throw Exception{ sl, move(e), "Could not create mysql session" };
+		}
 	}
 
-	α ToMySqlValue( const DataValue& dataValue )noexcept(false)->mysqlx::Value
+	α ToMySqlValue( const object& dataValue )noexcept(false)->mysqlx::Value
 	{
-		switch( (EDataValue)dataValue.index() )
+		switch( (EObject)dataValue.index() )
 		{
-			case EDataValue::Null:
+			case EObject::Null:
 				return mysqlx::Value();
-			case EDataValue::String:
+			case EObject::String:
 				return mysqlx::Value( std::get<string>(dataValue) );
-			case EDataValue::StringView:
+			case EObject::StringView:
 				return mysqlx::Value( string(std::get<sv>(dataValue)) );
-			case EDataValue::StringPtr:
+			case EObject::StringPtr:
 				return mysqlx::Value( string(*std::get<sp<string>>(dataValue)) );
-			case EDataValue::Bool:
+			case EObject::Bool:
 				return mysqlx::Value( std::get<bool>(dataValue) );
-			case EDataValue::Int:
+			case EObject::Int:
 				return mysqlx::Value( std::get<int>(dataValue) );
-			case EDataValue::Int64:
+			case EObject::Int64:
 				return mysqlx::Value( std::get<_int>(dataValue) );
-			case EDataValue::Uint:
+			case EObject::Uint:
 				return mysqlx::Value( std::get<uint>(dataValue) );
-			case EDataValue::Decimal2:
+			case EObject::Decimal2:
 				return mysqlx::Value( (double)std::get<Jde::Decimal2>(dataValue) );
-			case EDataValue::Double:
+			case EObject::Double:
 				return mysqlx::Value( std::get<double>(dataValue) );
-			case EDataValue::DoubleOptional:
+			case EObject::DoubleOptional:
 			{
 				var value = std::get<optional<double>>( dataValue );
 				return value.has_value() ? mysqlx::Value( value.value() ) : mysqlx::Value();
 			}
-			case EDataValue::DateOptional:
+			case EObject::DateOptional:
 			{
-				var value = std::get<optional<DBDateTime>>( dataValue );
+				var value = std::get<optional<DBTimePoint>>( dataValue );
 				if( !value.has_value() )
 					return mysqlx::Value();
 				else
@@ -74,7 +76,7 @@ namespace Jde::DB::MySql
 					os << std::setprecision(6) << std::fixed << fraction2;
 					auto fractionString = os.str().substr(1);
 
-					string value2 = fmt::format( "{}{}", stringValue, fractionString );//:.6
+					string value2 = format( "{}{}", stringValue, fractionString );//:.6
 					if( value2.find('e')!=string::npos )
 						ERR( "{} has {} for {} returning {}, nanos={}"sv, value2, fractionString, fraction, value2, value.value().time_since_epoch().count() );//2019-12-13 20:43:04.305e-06 has .305e-06 for 9.30500e-06 returning 2019-12-13 20:43:04.305e-06, nanos=1576269784000009305
 					return mysqlx::Value( value2 );
@@ -85,58 +87,14 @@ namespace Jde::DB::MySql
 		return mysqlx::Value( "compiler remove warning noop" );
 	}
 
-	α MySqlDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log, const source_location& sl )noexcept(false)->uint
-	{
-		auto pSession = GetSession();
-		auto statement = pSession->sql( string(sql) );
-		if( pValues )
-		{
-			for( var& value : *pValues )
-				statement.bind( ToMySqlValue( value ) );
-		}
-		uint count = 0;
-		try
-		{
-			auto result = statement.execute();
-			if( log )
-				DBLOG( sql, pValues );
-			std::list<mysqlx::Row> rows = result.fetchAll();
-			count = rows.size();
-			for( mysqlx::Row& row : rows )
-				f( MySqlRow(row) );
-			return count;
-		}
-		catch( ::mysqlx::Error& e )
-		{
-			throw DBException{ move(e), sql, pValues, sl };
-		}
-	}
-	α MySqlDataSource::Execute( sv sql, const source_location& sl )noexcept(false)->uint
-	{
-		return Execute( sql, nullptr, nullptr, false, true, sl );
-	}
-	α MySqlDataSource::Execute( sv sql, const vector<DataValue>& parameters, bool log, const source_location& sl )noexcept(false)->uint
-	{
-		return Execute( sql, &parameters, nullptr, false, log, sl );
-	}
-
-	α MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, bool log, const source_location& sl )noexcept(false)->uint
-	{
-		return Execute( sql, &parameters, nullptr, true, log, sl );
-	}
-	α MySqlDataSource::ExecuteProc( sv sql, const vector<DataValue>& parameters, function<void(const IRow&)> f, bool log, const source_location& sl )noexcept(false)->uint
-	{
-		return Execute( sql, &parameters, &f, true, log, sl );
-	}
-
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	α MySqlDataSource::Execute( sv sql, const vector<DataValue>* pParameters, std::function<void(const IRow&)>* pFunction, bool isStoredProc, bool log, const source_location& sl )noexcept(false)->uint
+	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool isStoredProc, SL sl, bool log=true )noexcept(false)->uint
 	{
-		auto pSession = GetSession();
-		string fullSql = isStoredProc ? fmt::format( "call {}", sql ) : string( sql );
+		var fullSql = isStoredProc ? format( "call {}", move(sql) ) : move( sql );
 		if( log )
 			DBLOG( fullSql, pParameters );
-		auto statement = pSession->sql( fullSql );
+		mysqlx::Session session = Session( cs );
+		auto statement = session.sql( fullSql );
 		if( pParameters )
 		{
 			for( var& parameter : *pParameters )
@@ -154,22 +112,98 @@ namespace Jde::DB::MySql
 		}
 		catch( ::mysqlx::Error& e )
 		{
-			throw DBException{ move(e), fullSql, pParameters, sl };
+			throw DBException{ fullSql, pParameters, e.what(), sl };
 		}
 		return 1;//wari
+	}
+	α Select( str cs, str sql, RowΛ f, const vector<object>* pValues, SL sl, bool log=true )noexcept(false)->uint
+	{
+		mysqlx::Session session = Session( cs );
+		auto statement = session.sql( sql );
+		if( pValues )
+		{
+			for( var& value : *pValues )
+				statement.bind( ToMySqlValue(value) );
+		}
+		try
+		{
+			if( log )
+				DBLOG( sql, pValues );
+			auto result = statement.execute();
+			std::list<mysqlx::Row> rows = result.fetchAll();//
+			for( mysqlx::Row& row : rows )
+				f( MySqlRow(row) );
+			return rows.size();
+		}
+		catch( ::mysqlx::Error& e )
+		{
+			throw DBException{ sql, pValues, e.what(), sl };
+		}
+	}
+
+	α MySqlDataSource::Execute( string sql, SL sl )noexcept(false)->uint
+	{
+		return Execute( move(sql), nullptr, nullptr, false, sl );
+	}
+	α MySqlDataSource::Execute( string sql, const vector<object>& parameters, SL sl )noexcept(false)->uint
+	{
+		return Execute( move(sql), &parameters, nullptr, false, sl );
+	}
+	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool isStoredProc, SL sl )noexcept(false)->uint
+	{
+		return MySql::Execute( CS(), move(sql), pParams, f, isStoredProc, sl );
+	}
+
+	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, SL sl )noexcept(false)->uint
+	{
+		return MySql::Execute( CS(), move(sql), &parameters, nullptr, true, sl );
+	}
+	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, RowΛ f, SL sl )noexcept(false)->uint
+	{
+		return MySql::Execute( CS(), move(sql), &parameters, &f, true, sl );
 	}
 
 	α MySqlDataSource::SchemaProc()noexcept->sp<ISchemaProc>
 	{
 		sp<IDataSource> p = shared_from_this();
-		return make_shared<MySqlSchemaProc>( p );
+		return ms<MySqlSchemaProc>( p );
+	}
+	α MySqlDataSource::Select( string sql, RowΛ f, const vector<object>* pValues, SL sl )noexcept(false)->uint
+	{
+		return MySql::Select( CS(), move(sql), f, pValues, sl );
 	}
 
-	α MySqlDataSource::SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log, const source_location& sl )noexcept->up<IAwaitable>
+	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )noexcept->up<IAwaitable>
 	{
-		return make_unique<AsyncAwaitable>( [ql=move(sql),params=move(parameters),log,f, sl,this]()
+		return mu<AsyncAwaitable>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
 		{
-			return make_shared<uint>( Select(ql, f, &params, log, sl) );
+			auto pCollection  = pAwait->Results();
+			auto rowΛ = [pCollection, pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
+			//using RowΛ=function<void(const IRow&)>;
+			//using CoRowΛ=function<void( sp<void> pCollection, const IRow& r )>;
+
+			Select( sql, rowΛ, &params, sl );
+			return pCollection;
 		});
+	}
+	α MySqlDataSource::ExecuteProcCo( string&& sql, const vector<object>&& parameters, SL sl )noexcept->up<IAwaitable>
+	{
+		return mu<AsyncAwaitable>( [ql=move(sql),params=move(parameters),sl,this]()
+		{
+			return ms<uint>( ExecuteProc(ql, params, sl) );
+		});
+	}
+
+	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool isStoredProc, SL sl )noexcept(false)->uint
+	{
+		return MySql::Execute( CS(), move(sql), pParameters, f, isStoredProc, sl, false );
+	}
+	α MySqlDataSource::ExecuteProcNoLog( string sql, const std::vector<object>& parameters, SL sl )noexcept(false)->uint
+	{
+		return MySql::Execute( CS(), move(sql), &parameters, nullptr, true, sl, false );
+	}
+	α MySqlDataSource::SelectNoLog( string sql, RowΛ f, const std::vector<object>* pValues, SL sl )noexcept(false)->uint
+	{
+		return MySql::Select( CS(), move(sql), f, pValues, sl, false );
 	}
 }

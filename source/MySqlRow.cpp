@@ -51,40 +51,40 @@ namespace Jde::DB::MySql
 	MySqlRow::MySqlRow( const mysqlx::Row& row ):
 		_row{ row }
 	{}
-	DataValue ToDataValue( const mysqlx::Value& value )
+	object ToObject( const mysqlx::Value& value, SL sl )noexcept(false)
 	{
 		var type = value.getType();
-		DataValue v{ nullptr };
+		object v{ nullptr };
 		if( type==mysqlx::Value::Type::VNULL )
-			v = DataValue{nullptr};
+			v = object{nullptr};
 		else if( type==mysqlx::Value::Type::STRING )
-			v = DataValue{ value.get<string>() };
+			v = object{ value.get<string>() };
 		else if( type==mysqlx::Value::Type::BOOL )
-			v = DataValue{ value.get<bool>() };
+			v = object{ value.get<bool>() };
 		else if( type==mysqlx::Value::Type::INT64 )
-			v = DataValue{ static_cast<_int>(value.get<_int>()) };
+			v = object{ static_cast<_int>(value.get<_int>()) };
 		else if( type==mysqlx::Value::Type::UINT64 )
-			v = DataValue{ value.get<uint>() };
+			v = object{ value.get<uint>() };
 		else if( type==mysqlx::Value::Type::DOUBLE )
-			v = DataValue{ optional<double>(value.get<double>()) };
+			v = object{ optional<double>(value.get<double>()) };
 		else
-			throw Exception{ SRCE_CUR, ELogLevel::Debug, "{} dataValue not implemented", value.getType() };
+			throw Exception{ sl, ELogLevel::Debug, "{} object not implemented", value.getType() };
 		return v;
 	}
 
-	DataValue MySqlRow::operator[]( uint position )const
+	object MySqlRow::operator[]( uint position )const
 	{
-		return ToDataValue( _row[static_cast<mysqlx::col_count_t>(position)] );
+		return ToObject( _row[static_cast<mysqlx::col_count_t>(position)], SRCE_CUR );
 	}
-#define CATCH(type) catch( ::mysqlx::Error& e ){ throw Exception{ SRCE_CUR, move(e), "Could not convert position {} - {} to an ##type.", position, GetTypeName(value) }; }
-	_int MySqlRow::GetInt( uint position )const
+#define CATCH(type) catch( ::mysqlx::Error& e ){ throw Exception{ sl, move(e), "Could not convert position {} - {} to an ##type.", position, GetTypeName(value) }; }
+	_int MySqlRow::GetInt( uint position, SL sl )const noexcept(false)
 	{
 		_int intValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{	intValue = value.get<_int>(); } CATCH( int )
 		return intValue;
 	}
-	optional<_int> MySqlRow::GetIntOpt( uint position )const
+	optional<_int> MySqlRow::GetIntOpt( uint position, SL sl )const
 	{
 		optional<_int> intValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
@@ -95,30 +95,30 @@ namespace Jde::DB::MySql
 		return intValue;
 	}
 
-	uint MySqlRow::GetUInt( uint position )const
+	uint MySqlRow::GetUInt( uint position, SL sl )const
 	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{ return value.get<uint>(); } CATCH( uint )
 		return 0;//no-op
 	}
 
-	bool MySqlRow::GetBit( uint position )const
+	bool MySqlRow::GetBit( uint position, SL sl )const
 	{
 		return GetInt( position )!=0;
 	}
 
-	optional<uint> MySqlRow::GetUIntOpt( uint position )const
+	optional<uint> MySqlRow::GetUIntOpt( uint position, SL sl )const
 	{
 		return _row[static_cast<mysqlx::col_count_t>(position)].getType()==mysqlx::Value::Type::VNULL ? optional<uint>() : GetUInt( position );
 	}
 
-	string MySqlRow::GetString( uint position )const
+	string MySqlRow::GetString( uint position, SL sl )const
 	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{ return value.getType()==mysqlx::Value::Type::VNULL ? string() : value.get<string>(); } CATCH( string )
 		return string();
 	}
-	CIString MySqlRow::GetCIString( uint position )const
+	CIString MySqlRow::GetCIString( uint position, SL sl )const
 	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try
@@ -128,7 +128,7 @@ namespace Jde::DB::MySql
 		CATCH( CIString );
 		//return string();
 	}
-	double MySqlRow::GetDouble( uint position )const
+	double MySqlRow::GetDouble( uint position, SL sl )const
 	{
 		double doubleValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
@@ -139,29 +139,26 @@ namespace Jde::DB::MySql
 		CATCH( double );
 		return doubleValue;
 	}
-	optional<double> MySqlRow::GetDoubleOpt( uint position )const
+	optional<double> MySqlRow::GetDoubleOpt( uint position, SL sl )const
 	{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		return value.isNull() ? optional<double>() : optional<double>( GetDouble(position) );
 	}
-/*	DBDateTime GetDateTime2( uint position )const
-	{
 
-	}*/
-	DBDateTime MySqlRow::GetDateTime( uint position )const noexcept(false)
+	DBTimePoint MySqlRow::GetTimePoint( uint position, SL sl )const noexcept(false)
 	{
-		DBDateTime dateTimeValue;
+		DBTimePoint y;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try
 		{
 			if( value.getType()==::mysqlx::Value::DOUBLE )
 			{
 				var doubleValue = GetDouble( position );
-				dateTimeValue = DBClock::from_time_t( (int)doubleValue );
-				dateTimeValue+=microseconds( Math::URound((doubleValue-(uint)doubleValue)*1'000'000) );
+				y = DBClock::from_time_t( (int)doubleValue );
+				y+=microseconds( Math::URound((doubleValue-(uint)doubleValue)*1'000'000) );
 			}
 			else
-				dateTimeValue = DBClock::from_time_t( GetInt(position) );
+				y = DBClock::from_time_t( GetInt(position) );
 
 			//	THROWX( DBException("Expected DBType for datetime to be uint, got {}.", value.GetTypeName()) );
 /*			if( value.getType()!=::mysqlx::Value::Type::STRING )
@@ -220,15 +217,15 @@ namespace Jde::DB::MySql
 		}
 		CATCH( TimePoint );
 
-		return dateTimeValue;
+		return y;
 	}
 
-	optional<DBDateTime> MySqlRow::GetDateTimeOpt( uint position )const
+	optional<DBTimePoint> MySqlRow::GetTimePointOpt( uint position, SL sl )const
 	{
-		optional<DBDateTime> dateTimeValue;
+		optional<DBTimePoint> y;
 		var& value = GetIntOpt( position );
 		if( value.has_value() )
-			dateTimeValue = DBClock::from_time_t( value.value() );
-		return dateTimeValue;
+			y = DBClock::from_time_t( value.value() );
+		return y;
 	}
 }

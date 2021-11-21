@@ -11,21 +11,20 @@ namespace Jde::DB::MySql
 	struct MySqlRow : public IRow
 	{
 		MySqlRow( const mysqlx::Row& row );
-		DataValue operator[]( uint position )const override;
-		CIString GetCIString( uint position )const override;
-		std::string GetString( uint position )const override;
-		bool GetBit( uint position )const override;
-		_int GetInt( uint position )const override;
-		int32_t GetInt32( uint position )const override{ return static_cast<int32_t>( GetInt(position) ); }
-		optional<_int> GetIntOpt( uint position )const override;
-		uint GetUInt( uint position )const override;
-		optional<uint> GetUIntOpt( uint position )const override;
+		α operator[]( uint position )const noexcept(false)->object override;
+		α GetCIString( uint position, SRCE )const noexcept(false)->CIString override;
+		α GetString( uint position, SRCE )const noexcept(false)->std::string override;
+		α GetBit( uint position, SRCE )const noexcept(false)->bool override;
+		α GetInt( uint position, SRCE )const noexcept(false)->_int override;
+		α GetInt32( uint position, SRCE )const noexcept(false)->int32_t override{ return static_cast<int32_t>( GetInt(position) ); }
+		α GetIntOpt( uint position, SRCE )const noexcept(false)->optional<_int> override;
+		α GetUInt( uint position, SRCE )const noexcept(false)->uint override;
+		α GetUIntOpt( uint position, SRCE )const noexcept(false)->optional<uint> override;
 
-		double GetDouble( uint position )const override;
-		std::optional<double> GetDoubleOpt( uint position )const override;
-		DBDateTime GetDateTime( uint position )const noexcept(false) override;
-		//DBDateTime GetDateTime2( uint position )const override;
-		std::optional<DBDateTime> GetDateTimeOpt( uint position )const override;
+		α GetDouble( uint position, SRCE )const noexcept(false)->double override;
+		α GetDoubleOpt( uint position, SRCE )const noexcept(false)->std::optional<double> override;
+		α GetTimePoint( uint position, SRCE )const noexcept(false)->DBTimePoint override;
+		α GetTimePointOpt( uint position, SRCE )const noexcept(false)->std::optional<DBTimePoint> override;
 
 	private:
 		const mysqlx::Row& _row;
