@@ -1,4 +1,6 @@
 #pragma once
+#undef THROW
+#include <jde/Exception.h>
 #include "../../Framework/source/db/types/Schema.h"
 #include "../../Framework/source/db/types/Table.h"
 #include "../../Framework/source/db/SchemaProc.h"

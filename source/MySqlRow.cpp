@@ -66,7 +66,7 @@ namespace Jde::DB::MySql
 		else if( type==mysqlx::Value::Type::UINT64 )
 			v = object{ value.get<uint>() };
 		else if( type==mysqlx::Value::Type::DOUBLE )
-			v = object{ optional<double>(value.get<double>()) };
+			v = object{ value.get<double>() };
 		else
 			throw Exception{ sl, ELogLevel::Debug, "{} object not implemented", value.getType() };
 		return v;

@@ -16,7 +16,7 @@ namespace Jde::DB::MySql
 		α Execute( string sql, const vector<object>* pParameters, RowΛ* f, bool isStoredProc=false, SRCE )noexcept(false)->uint override;
 		α ExecuteProc( string sql, const vector<object>& parameters, SL sl )noexcept(false)->uint override;
 		α ExecuteProc( string sql, const vector<object>& parameters, RowΛ f, SL sl )noexcept(false)->uint override;
-		α ExecuteProcCo( string&& sql, const vector<object>&& parameters, SL sl )noexcept->up<IAwaitable> override;
+		α ExecuteProcCo( string sql, vector<object> p, SL sl )noexcept->up<IAwaitable> override;
 		α SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SL sl )noexcept->up<IAwaitable> override;
 		α SchemaProc()noexcept->sp<ISchemaProc> override;
 

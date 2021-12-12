@@ -46,41 +46,29 @@ namespace Jde::DB::MySql
 				return mysqlx::Value( std::get<_int>(dataValue) );
 			case EObject::Uint:
 				return mysqlx::Value( std::get<uint>(dataValue) );
-			case EObject::Decimal2:
-				return mysqlx::Value( (double)std::get<Jde::Decimal2>(dataValue) );
 			case EObject::Double:
 				return mysqlx::Value( std::get<double>(dataValue) );
-			case EObject::DoubleOptional:
+			case EObject::Time:
 			{
-				var value = std::get<optional<double>>( dataValue );
-				return value.has_value() ? mysqlx::Value( value.value() ) : mysqlx::Value();
-			}
-			case EObject::DateOptional:
-			{
-				var value = std::get<optional<DBTimePoint>>( dataValue );
-				if( !value.has_value() )
-					return mysqlx::Value();
-				else
-				{
-					const Jde::DateTime date{ value.value() };
-					auto stringValue = date.ToIsoString();
-					stringValue = Str::Replace( stringValue, "T", " " );
-					stringValue = Str::Replace( stringValue, "Z", "" );
-					uint nanos = value.value().time_since_epoch().count();
-					constexpr uint NanosPerSecond = std::chrono::nanoseconds(1s).count();
-					const double remainingNanos = nanos%NanosPerSecond;
-				 	double fraction = remainingNanos/NanosPerSecond;
-					var rounded = std::round( fraction*1000000 );
-					var fraction2 = rounded/1000000;
-					ostringstream os;
-					os << std::setprecision(6) << std::fixed << fraction2;
-					auto fractionString = os.str().substr(1);
+				var value = std::get<DBTimePoint>( dataValue );
+				const Jde::DateTime date{ value };
+				auto stringValue = date.ToIsoString();
+				stringValue = Str::Replace( stringValue, "T", " " );
+				stringValue = Str::Replace( stringValue, "Z", "" );
+				uint nanos = value.time_since_epoch().count();
+				constexpr uint NanosPerSecond = std::chrono::nanoseconds(1s).count();
+				const double remainingNanos = nanos%NanosPerSecond;
+				double fraction = remainingNanos/NanosPerSecond;
+				var rounded = std::round( fraction*1000000 );
+				var fraction2 = rounded/1000000;
+				ostringstream os;
+				os << std::setprecision(6) << std::fixed << fraction2;
+				auto fractionString = os.str().substr(1);
 
-					string value2 = format( "{}{}", stringValue, fractionString );//:.6
-					if( value2.find('e')!=string::npos )
-						ERR( "{} has {} for {} returning {}, nanos={}"sv, value2, fractionString, fraction, value2, value.value().time_since_epoch().count() );//2019-12-13 20:43:04.305e-06 has .305e-06 for 9.30500e-06 returning 2019-12-13 20:43:04.305e-06, nanos=1576269784000009305
-					return mysqlx::Value( value2 );
-				}
+				string value2 = format( "{}{}", stringValue, fractionString );//:.6
+				if( value2.find('e')!=string::npos )
+					ERR( "{} has {} for {} returning {}, nanos={}"sv, value2, fractionString, fraction, value2, value.time_since_epoch().count() );//2019-12-13 20:43:04.305e-06 has .305e-06 for 9.30500e-06 returning 2019-12-13 20:43:04.305e-06, nanos=1576269784000009305
+				return mysqlx::Value( value2 );
 			}
 		}
 		throw Exception{ SRCE_CUR, ELogLevel::Debug, "{} dataValue not implemented", dataValue.index() };
@@ -178,17 +166,17 @@ namespace Jde::DB::MySql
 		return mu<AsyncAwaitable>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
 		{
 			auto pCollection  = pAwait->Results();
-			auto rowΛ = [pCollection, pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
+			auto rowΛ = [pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
 			//using RowΛ=function<void(const IRow&)>;
 			//using CoRowΛ=function<void( sp<void> pCollection, const IRow& r )>;
 
 			Select( sql, rowΛ, &params, sl );
-			return pCollection;
+			return pAwait->Results();
 		});
 	}
-	α MySqlDataSource::ExecuteProcCo( string&& sql, const vector<object>&& parameters, SL sl )noexcept->up<IAwaitable>
+	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )noexcept->up<IAwaitable>
 	{
-		return mu<AsyncAwaitable>( [ql=move(sql),params=move(parameters),sl,this]()
+		return mu<AsyncAwaitable>( [ql=move(sql),params=move(p),sl,this]()
 		{
 			return ms<uint>( ExecuteProc(ql, params, sl) );
 		});
