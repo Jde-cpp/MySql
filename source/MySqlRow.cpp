@@ -1,6 +1,7 @@
 #include "MySqlRow.h"
 #include "../../Framework/source/db/DataType.h"
 #include "../../Framework/source/db/DBException.h"
+#include "../../Framework/source/math/MathUtilities.h"
 #define var const auto
 
 namespace Jde::DB::MySql
@@ -155,7 +156,7 @@ namespace Jde::DB::MySql
 			{
 				var doubleValue = GetDouble( position );
 				y = DBClock::from_time_t( (int)doubleValue );
-				y+=microseconds( Math::URound((doubleValue-(uint)doubleValue)*1'000'000) );
+				y+=microseconds( Round((doubleValue-(uint)doubleValue)*1'000'000) );
 			}
 			else
 				y = DBClock::from_time_t( GetInt(position) );

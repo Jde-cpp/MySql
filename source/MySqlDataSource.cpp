@@ -161,24 +161,25 @@ namespace Jde::DB::MySql
 		return MySql::Select( CS(), move(sql), f, pValues, sl );
 	}
 
-	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )noexcept->up<IAwaitable>
+	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )noexcept->up<IAwait>
 	{
-		return mu<AsyncAwaitable>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
+		return mu<PoolAwait<string>>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
 		{
-			auto pCollection  = pAwait->Results();
+			//auto pCollection  = pAwait->Results();
 			auto rowΛ = [pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
 			//using RowΛ=function<void(const IRow&)>;
 			//using CoRowΛ=function<void( sp<void> pCollection, const IRow& r )>;
 
 			Select( sql, rowΛ, &params, sl );
-			return pAwait->Results();
+			//return pAwait->Results();
+			return mu<string>();//TODO fix
 		});
 	}
-	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )noexcept->up<IAwaitable>
+	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )noexcept->up<IAwait>
 	{
-		return mu<AsyncAwaitable>( [ql=move(sql),params=move(p),sl,this]()
+		return mu<PoolAwait<uint>>( [ql=move(sql),params=move(p),sl,this]()
 		{
-			return ms<uint>( ExecuteProc(ql, params, sl) );
+			return mu<uint>( ExecuteProc(ql, params, sl) );
 		});
 	}
 

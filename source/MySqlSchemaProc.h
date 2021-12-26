@@ -14,7 +14,7 @@ namespace Jde::DB::MySql
 		MySqlSchemaProc( sp<IDataSource> pDataSource ):
 			ISchemaProc{ pDataSource }
 		{}
-		α LoadTables( sv catalog )noexcept(false)->up<flat_map<string,Table>> override;
+		α LoadTables( sv catalog )noexcept(false)->flat_map<string,Table> override;
 		α ToType( sv name )noexcept->EType override;
 		α LoadIndexes( sv schema, sv tableName )noexcept(false)->vector<Index> override;
 		α LoadForeignKeys( sv catalog )noexcept(false)->flat_map<string,ForeignKey> override;
