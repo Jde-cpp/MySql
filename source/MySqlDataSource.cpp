@@ -163,21 +163,15 @@ namespace Jde::DB::MySql
 
 	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )noexcept->up<IAwait>
 	{
-		return mu<PoolAwait<string>>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
+		return mu<PoolAwait>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
 		{
-			//auto pCollection  = pAwait->Results();
 			auto rowΛ = [pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
-			//using RowΛ=function<void(const IRow&)>;
-			//using CoRowΛ=function<void( sp<void> pCollection, const IRow& r )>;
-
 			Select( sql, rowΛ, &params, sl );
-			//return pAwait->Results();
-			return mu<string>();//TODO fix
 		});
 	}
 	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )noexcept->up<IAwait>
 	{
-		return mu<PoolAwait<uint>>( [ql=move(sql),params=move(p),sl,this]()
+		return mu<TPoolAwait<uint>>( [ql=move(sql),params=move(p),sl,this]()
 		{
 			return mu<uint>( ExecuteProc(ql, params, sl) );
 		});
