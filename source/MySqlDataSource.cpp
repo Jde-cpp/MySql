@@ -40,11 +40,13 @@ namespace Jde::DB::MySql
 				return mysqlx::Value( string(*std::get<sp<string>>(dataValue)) );
 			case EObject::Bool:
 				return mysqlx::Value( std::get<bool>(dataValue) );
-			case EObject::Int:
+			case EObject::Int32:
 				return mysqlx::Value( std::get<int>(dataValue) );
 			case EObject::Int64:
 				return mysqlx::Value( std::get<_int>(dataValue) );
-			case EObject::Uint:
+			case EObject::UInt32:
+				return mysqlx::Value( std::get<uint32_t>(dataValue) );
+			case EObject::UInt64:
 				return mysqlx::Value( std::get<uint>(dataValue) );
 			case EObject::Double:
 				return mysqlx::Value( std::get<double>(dataValue) );
