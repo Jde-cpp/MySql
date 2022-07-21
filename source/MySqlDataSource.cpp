@@ -14,7 +14,7 @@ Jde::DB::IDataSource* GetDataSource()
 namespace Jde::DB::MySql
 {
 	using mysqlx::SessionOption;
-	α Session( str cs, SRCE )noexcept(false)->mysqlx::Session
+	α Session( str cs, SRCE )ε->mysqlx::Session
 	{
 		try
 		{
@@ -22,11 +22,14 @@ namespace Jde::DB::MySql
 		}
 		catch( std::exception& e )
 		{
-			throw Exception{ sl, move(e), "Could not create mysql session" };
+			Exception e2{ SRCE_CUR, move(e), "Could not create mysql session" };
+			e2.Push( sl );
+			e2.SetLevel( ELogLevel::Critical );
+			e2.Throw();
 		}
 	}
 
-	α ToMySqlValue( const object& dataValue )noexcept(false)->mysqlx::Value
+	α ToMySqlValue( const object& dataValue )ε->mysqlx::Value
 	{
 		switch( (EObject)dataValue.index() )
 		{
@@ -40,6 +43,8 @@ namespace Jde::DB::MySql
 				return mysqlx::Value( string(*std::get<sp<string>>(dataValue)) );
 			case EObject::Bool:
 				return mysqlx::Value( std::get<bool>(dataValue) );
+			case EObject::Int8:
+				return mysqlx::Value( std::get<int8_t>(dataValue) );
 			case EObject::Int32:
 				return mysqlx::Value( std::get<int>(dataValue) );
 			case EObject::Int64:
@@ -78,7 +83,7 @@ namespace Jde::DB::MySql
 	}
 
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool isStoredProc, SL sl, bool log=true )noexcept(false)->uint
+	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool isStoredProc, SL sl, bool log=true )ε->uint
 	{
 		var fullSql = isStoredProc ? format( "call {}", move(sql) ) : move( sql );
 		if( log )
@@ -106,7 +111,7 @@ namespace Jde::DB::MySql
 		}
 		return 1;//wari
 	}
-	α Select( str cs, str sql, RowΛ f, const vector<object>* pValues, SL sl, bool log=true )noexcept(false)->uint
+	α Select( str cs, str sql, RowΛ f, const vector<object>* pValues, SL sl, bool log=true )ε->uint
 	{
 		mysqlx::Session session = Session( cs );
 		auto statement = session.sql( sql );
@@ -131,47 +136,47 @@ namespace Jde::DB::MySql
 		}
 	}
 
-	α MySqlDataSource::Execute( string sql, SL sl )noexcept(false)->uint
+	α MySqlDataSource::Execute( string sql, SL sl )ε->uint
 	{
 		return Execute( move(sql), nullptr, nullptr, false, sl );
 	}
-	α MySqlDataSource::Execute( string sql, const vector<object>& parameters, SL sl )noexcept(false)->uint
+	α MySqlDataSource::Execute( string sql, const vector<object>& parameters, SL sl )ε->uint
 	{
 		return Execute( move(sql), &parameters, nullptr, false, sl );
 	}
-	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool isStoredProc, SL sl )noexcept(false)->uint
+	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool isStoredProc, SL sl )ε->uint
 	{
 		return MySql::Execute( CS(), move(sql), pParams, f, isStoredProc, sl );
 	}
 
-	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, SL sl )noexcept(false)->uint
+	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, SL sl )ε->uint
 	{
 		return MySql::Execute( CS(), move(sql), &parameters, nullptr, true, sl );
 	}
-	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, RowΛ f, SL sl )noexcept(false)->uint
+	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, RowΛ f, SL sl )ε->uint
 	{
 		return MySql::Execute( CS(), move(sql), &parameters, &f, true, sl );
 	}
 
-	α MySqlDataSource::SchemaProc()noexcept->sp<ISchemaProc>
+	α MySqlDataSource::SchemaProc()ι->sp<ISchemaProc>
 	{
 		sp<IDataSource> p = shared_from_this();
 		return ms<MySqlSchemaProc>( p );
 	}
-	α MySqlDataSource::Select( string sql, RowΛ f, const vector<object>* pValues, SL sl )noexcept(false)->uint
+	α MySqlDataSource::Select( string sql, RowΛ f, const vector<object>* pValues, SL sl )ε->uint
 	{
 		return MySql::Select( CS(), move(sql), f, pValues, sl );
 	}
 
-	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )noexcept->up<IAwait>
+	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )ι->up<IAwait>
 	{
 		return mu<PoolAwait>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()
 		{
-			auto rowΛ = [pAwait]( const IRow& r )noexcept(false){ pAwait->OnRow(r); };
+			auto rowΛ = [pAwait]( const IRow& r )ε{ pAwait->OnRow(r); };
 			Select( sql, rowΛ, &params, sl );
 		});
 	}
-	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )noexcept->up<IAwait>
+	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )ι->up<IAwait>
 	{
 		return mu<TPoolAwait<uint>>( [ql=move(sql),params=move(p),sl,this]()
 		{
@@ -179,15 +184,15 @@ namespace Jde::DB::MySql
 		});
 	}
 
-	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool isStoredProc, SL sl )noexcept(false)->uint
+	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool isStoredProc, SL sl )ε->uint
 	{
 		return MySql::Execute( CS(), move(sql), pParameters, f, isStoredProc, sl, false );
 	}
-	α MySqlDataSource::ExecuteProcNoLog( string sql, const std::vector<object>& parameters, SL sl )noexcept(false)->uint
+	α MySqlDataSource::ExecuteProcNoLog( string sql, const std::vector<object>& parameters, SL sl )ε->uint
 	{
 		return MySql::Execute( CS(), move(sql), &parameters, nullptr, true, sl, false );
 	}
-	α MySqlDataSource::SelectNoLog( string sql, RowΛ f, const std::vector<object>* pValues, SL sl )noexcept(false)->uint
+	α MySqlDataSource::SelectNoLog( string sql, RowΛ f, const std::vector<object>* pValues, SL sl )ε->uint
 	{
 		return MySql::Select( CS(), move(sql), f, pValues, sl, false );
 	}

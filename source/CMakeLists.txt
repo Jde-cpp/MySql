@@ -1,4 +1,4 @@
-set( CMAKE_CXX_COMPILER clang-12 )
+set( CMAKE_CXX_COMPILER clang )
 cmake_minimum_required(VERSION 3.16)
 project(MySql)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )

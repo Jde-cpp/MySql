@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/home/duffyj/code/libraries/spdlog/include/",
-                "/home/duffyj/code/libraries/boostorg/boost_1_71_0",
+                "/home/duffyj/code/libraries/boostorg/boost_1_79_0",
 					 "/home/duffyj/code/libraries/json/include",
 					 "/home/duffyj/code/libraries/mysql/include/mysqlx"
             ],
