@@ -14,8 +14,9 @@ namespace Jde::DB::MySql
 		α Execute( string sql, const vector<object>* pParameters, RowΛ* f, bool isStoredProc=false, SRCE )ε->uint override;
 		α ExecuteProc( string sql, const vector<object>& parameters, SL sl )ε->uint override;
 		α ExecuteProc( string sql, const vector<object>& parameters, RowΛ f, SL sl )ε->uint override;
-		α ExecuteProcCo( string sql, vector<object> p, SL sl )ι->up<IAwait> override;
-		α ExecuteCo( string sql, vector<object> p, SRCE )ι->up<IAwait> override{ return ExecuteProcCo(move(sql), move(p), sl); }
+		α ExecuteProcCo( string sql, vector<object> p, SL sl )ι->up<IAwait> override{ return ExecuteCo( move(sql), move(p), true, sl ); }
+		α ExecuteCo( string sql, vector<object> p, SRCE )ι->up<IAwait> override{ return ExecuteCo(move(sql), move(p), false, sl); }
+		α ExecuteCo( string sql, vector<object> p, bool proc, SRCE )ι->up<IAwait>;
 		α SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SL sl )ι->up<IAwait> override;
 		α SchemaProc()ι->sp<ISchemaProc> override;
 

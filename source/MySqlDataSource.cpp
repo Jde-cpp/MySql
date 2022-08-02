@@ -83,9 +83,9 @@ namespace Jde::DB::MySql
 	}
 
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool isStoredProc, SL sl, bool log=true )ε->uint
+	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool proc, SL sl, bool log=true )ε->uint
 	{
-		var fullSql = isStoredProc ? format( "call {}", move(sql) ) : move( sql );
+		var fullSql = proc ? format( "call {}", move(sql) ) : move( sql );
 		if( log )
 			DBLOG( fullSql, pParameters );
 		mysqlx::Session session = Session( cs );
@@ -144,9 +144,9 @@ namespace Jde::DB::MySql
 	{
 		return Execute( move(sql), &parameters, nullptr, false, sl );
 	}
-	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool isStoredProc, SL sl )ε->uint
+	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool proc, SL sl )ε->uint
 	{
-		return MySql::Execute( CS(), move(sql), pParams, f, isStoredProc, sl );
+		return MySql::Execute( CS(), move(sql), pParams, f, proc, sl );
 	}
 
 	α MySqlDataSource::ExecuteProc( string sql, const vector<object>& parameters, SL sl )ε->uint
@@ -176,17 +176,17 @@ namespace Jde::DB::MySql
 			Select( sql, rowΛ, &params, sl );
 		});
 	}
-	α MySqlDataSource::ExecuteProcCo( string sql, const vector<object> p, SL sl )ι->up<IAwait>
+	α MySqlDataSource::ExecuteCo( string sql_, const vector<object> p, bool proc_, SL sl )ι->up<IAwait>
 	{
-		return mu<TPoolAwait<uint>>( [ql=move(sql),params=move(p),sl,this]()
+		return mu<TPoolAwait<uint>>( [sql=move(sql_), params=move(p), sl, proc=proc_, this]()
 		{
-			return mu<uint>( ExecuteProc(ql, params, sl) );
+			return mu<uint>( Execute(move(sql), &params, nullptr, proc, sl) );
 		});
 	}
 
-	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool isStoredProc, SL sl )ε->uint
+	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool proc, SL sl )ε->uint
 	{
-		return MySql::Execute( CS(), move(sql), pParameters, f, isStoredProc, sl, false );
+		return MySql::Execute( CS(), move(sql), pParameters, f, proc, sl, false );
 	}
 	α MySqlDataSource::ExecuteProcNoLog( string sql, const std::vector<object>& parameters, SL sl )ε->uint
 	{
