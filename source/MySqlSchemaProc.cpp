@@ -5,23 +5,21 @@
 #include "../../Framework/source/db/Syntax.h"
 #define var const auto
 
-namespace Jde::DB::MySql
-{
-	α MySqlSchemaProc::LoadTables( sv catalog )noexcept(false)->flat_map<string,Table>
-	{
+namespace Jde::DB::MySql{
+	static sp<LogTag> _logTag = Logging::Tag( "dbDriver" );
+
+	α MySqlSchemaProc::LoadTables( sv catalog )noexcept(false)->flat_map<string,Table>{
 		string catalogLocal;
 		if( catalog.empty() )
 			catalog = catalogLocal = _pDataSource->Catalog( string{DB::MySqlSyntax{}.CatalogSelect()} );
 		auto tables = flat_map<string,Table>();
-		auto result2 = [&]( sv tableName, sv name, _int ordinalPosition, sv dflt, string isNullable, sv type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale )
-		{
+		auto result2 = [&]( sv tableName, sv name, _int ordinalPosition, sv dflt, string isNullable, sv type, optional<_int> maxLength, _int isIdentity, _int isId, optional<_int> numericPrecision, optional<_int> numericScale ){
 			auto& table = tables.emplace( tableName, Table{catalog,tableName} ).first->second;
 			table.Columns.resize( ordinalPosition );
 
 			table.Columns[ordinalPosition-1] = Column{ name, (uint)ordinalPosition, dflt, isNullable!="NO", ToType(type), maxLength.value_or(0), isIdentity!=0, isId!=0, numericPrecision, numericScale };
 		};
-		auto result = [&]( const IRow& row )
-		{
+		auto result = [&]( const IRow& row ){
 			result2( row.GetString(0), row.GetString(1), row.GetInt(2), row.GetString(3), row.GetString(4), row.GetString(5), row.GetIntOpt(6), row.GetInt(7), row.GetInt(8), row.GetIntOpt(9), row.GetIntOpt(10) );
 		};
 		var sql = Sql::ColumnSql( false );
@@ -29,23 +27,20 @@ namespace Jde::DB::MySql
 		return tables;
 	}
 
-	α MySqlSchemaProc::LoadIndexes( sv catalog, sv tableName )noexcept(false)->vector<Index>
-	{
+	α MySqlSchemaProc::LoadIndexes( sv catalog, sv tableName )noexcept(false)->vector<Index>{
 		string catalogLocal;
 		if( catalog.empty() )
 			catalog = catalogLocal = _pDataSource->Catalog( string{DB::MySqlSyntax{}.CatalogSelect()} );
 
 		vector<Index> indexes;
-		auto result = [&]( const IRow& row )
-		{
+		auto result = [&]( const IRow& row ){
 			uint i=0;
 			var tableName = row.GetString(i++); var indexName = row.GetString(i++); var columnName = row.GetString(i++); var unique = row.GetBit(i++)==0;
 
 			//var ordinal = row.GetUInt(i++); var dflt = row.GetString(i++);  //var primaryKey = row.GetBit(i);
 			vector<SchemaName>* pColumns;
 			auto pExisting = std::find_if( indexes.begin(), indexes.end(), [&](auto index){ return index.Name==indexName && index.TableName==tableName; } );
-			if( pExisting==indexes.end() )
-			{
+			if( pExisting==indexes.end() ){
 				bool clustered = false;//Boolean.Parse( row["CLUSTERED"].ToString() );
 				bool primaryKey = indexName=="PRIMARY";//Boolean.Parse( row["PRIMARY_KEY"].ToString() );
 				pColumns = &indexes.emplace_back( indexName, tableName, primaryKey, nullptr, unique, clustered ).Columns;
@@ -63,16 +58,12 @@ namespace Jde::DB::MySql
 		return indexes;
 	}
 
-	α MySqlSchemaProc::LoadProcs( sv catalog )noexcept(false)->flat_map<string,Procedure>
-	{
+	α MySqlSchemaProc::LoadProcs( sv catalog )noexcept(false)->flat_map<string,Procedure>{
 		string catalogLocal;
 		if( catalog.empty() )
 			catalog = catalogLocal = _pDataSource->Catalog( string{DB::MySqlSyntax{}.CatalogSelect()} );
-		//if( catalog.size() )
-		//	params.emplace_back( catalog );
 		flat_map<string,Procedure> values;
-		auto fnctn = [&values]( const IRow& row )
-		{
+		auto fnctn = [&values]( const IRow& row ){
 			string name = row.GetString(0);
 			values.try_emplace( name, Procedure{name} );
 		};
@@ -80,8 +71,7 @@ namespace Jde::DB::MySql
 		return values;
 	}
 
-	α MySqlSchemaProc::ToType( sv typeName )noexcept->EType
-	{
+	α MySqlSchemaProc::ToType( sv typeName )noexcept->EType{
 		auto type{ EType::None };
 		if(typeName=="datetime")
 			type = EType::DateTime;
@@ -138,14 +128,12 @@ namespace Jde::DB::MySql
 		return type;
 	}
 
-	α MySqlSchemaProc::LoadForeignKeys( sv catalog )noexcept(false)->flat_map<string,ForeignKey>
-	{
+	α MySqlSchemaProc::LoadForeignKeys( sv catalog )noexcept(false)->flat_map<string,ForeignKey>{
 		string catalogLocal;
 		if( catalog.empty() )
 			catalog = catalogLocal = _pDataSource->Catalog( string{DB::MySqlSyntax{}.CatalogSelect()} );
 		flat_map<string,ForeignKey> fks;
-		auto result = [&]( const IRow& row )
-		{
+		auto result = [&]( const IRow& row ){
 			uint i=0;
 			var name = row.GetString(i++); var fkTable = row.GetString(i++); var column = row.GetString(i++); var pkTable = row.GetString(i++); //var pkColumn = row.GetString(i++); var ordinal = row.GetUInt(i);
 			auto pExisting = fks.find( name );

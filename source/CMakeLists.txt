@@ -1,26 +1,30 @@
-set( CMAKE_CXX_COMPILER clang )
 cmake_minimum_required(VERSION 3.16)
-project(MySql)
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
-include(SetUpConfigurations)
+project( Jde.MySql )
+set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
+include(common)
 #######################################################
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
-add_library( Jde.MySql SHARED MySqlDataSource.cpp MySqlRow.cpp MySqlSchemaProc.cpp  MySqlStatements.cpp )
+#find_package(ZLIB)
+
+
+include_directories( "${cmakeLibraryPath}/mysql-connector-cpp/include/mysqlx" )
+link_directories( debug ${cmakeLibraryPath}/mysql-connector-cpp/lib64/debug optimized ${cmakeLibraryPath}/mysql-connector-cpp/lib64/release )
+
+add_library( ${CMAKE_PROJECT_NAME} SHARED MySqlDataSource.cpp MySqlRow.cpp MySqlSchemaProc.cpp  MySqlStatements.cpp )
 #######################################################
-include_directories( "$ENV{REPO_DIR}/mysql-connector-cpp/include/mysqlx" )
+
 include_directories( "../../Public" )
-target_link_libraries(Jde.MySql)
-target_link_libraries(Jde.MySql mysqlcppconn8)
+#target_link_libraries( ${CMAKE_PROJECT_NAME} )
+target_link_libraries( ${CMAKE_PROJECT_NAME} mysqlcppconn8 )
+target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized fmt::libfmt.a )
 #######################################################
-target_precompile_headers(Jde.MySql
+target_precompile_headers( ${CMAKE_PROJECT_NAME}
   PRIVATE
 	<vector>
 	<boost/crc.hpp>
 	<boost/system/error_code.hpp>
-	<spdlog/spdlog.h>
-	<spdlog/sinks/basic_file_sink.h>
-	<spdlog/fmt/ostr.h>
 	<nlohmann/json.hpp>
+	<jde/TypeDefs.h>
 	<jde/Exception.h>
 	"../../Framework/source/DateTime.h"
 	<jde/Str.h>

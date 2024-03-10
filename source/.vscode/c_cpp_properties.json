@@ -3,16 +3,16 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/home/duffyj/code/libraries/spdlog/include/",
-                "/home/duffyj/code/libraries/boostorg/boost_1_79_0",
-					 "/home/duffyj/code/libraries/json/include",
-					 "/home/duffyj/code/libraries/mysql/include/mysqlx"
+							"${workspaceFolder}/**",
+							"${REPO_DIR}/install/asan/spdlog/include/",
+							"${BOOST_LIBRARYDIR}/../..",
+							"${REPO_DIR}/json/include",
+							"${REPO_DIR}/install/asan/mysql-connector-cpp/include/mysqlx"
             ],
 				"defines": [],
 				"forcedInclude": ["${workspaceFolder}/pc.h"],
-				"cppStandard": "c++17",
-            "compilerPath": "/usr/bin/g++-8",
+				"cppStandard": "c++23",
+            "compilerPath": "/usr/bin/g++-13",
             "intelliSenseMode": "gcc-x64"
         }
     ],
