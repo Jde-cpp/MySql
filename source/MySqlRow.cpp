@@ -78,35 +78,28 @@ namespace Jde::DB::MySql
 		return ToObject( _row[static_cast<mysqlx::col_count_t>(position)], SRCE_CUR );
 	}
 #define CATCH(type) catch( ::mysqlx::Error& e ){ throw Exception{ sl, move(e), "Could not convert position {} - {} to an ##type.", position, GetTypeName(value) }; }
-	_int MySqlRow::GetInt( uint position, SL sl )const noexcept(false)
-	{
+	_int MySqlRow::GetInt( uint position, SL sl )Ε{
 		_int intValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{	intValue = value.get<_int>(); } CATCH( int )
 		return intValue;
 	}
-	optional<_int> MySqlRow::GetIntOpt( uint position, SL sl )const
-	{
+	optional<_int> MySqlRow::GetIntOpt( uint position, SL sl )Ε{
 		optional<_int> intValue;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
-		if( !value.isNull() )
-		{
+		if( !value.isNull() ){
 			try{	intValue = value.get<_int>(); } CATCH( optional<int> )
 		}
 		return intValue;
 	}
 
-	uint MySqlRow::GetUInt( uint position, SL sl )const
-	{
+	uint MySqlRow::GetUInt( uint position, SL sl )Ε{
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try{ return value.get<uint>(); } CATCH( uint )
 		return 0;//no-op
 	}
 
-	bool MySqlRow::GetBit( uint position, SL sl )const
-	{
-		return GetInt( position )!=0;
-	}
+	bool MySqlRow::GetBit( uint position, SL sl )Ε{return GetInt( position )!=0;}
 
 	optional<uint> MySqlRow::GetUIntOpt( uint position, SL sl )const
 	{
@@ -146,8 +139,7 @@ namespace Jde::DB::MySql
 		return value.isNull() ? optional<double>() : optional<double>( GetDouble(position) );
 	}
 
-	DBTimePoint MySqlRow::GetTimePoint( uint position, SL sl )const noexcept(false)
-	{
+	DBTimePoint MySqlRow::GetTimePoint( uint position, SL sl )Ε{
 		DBTimePoint y;
 		var& value = _row[static_cast<mysqlx::col_count_t>(position)];
 		try

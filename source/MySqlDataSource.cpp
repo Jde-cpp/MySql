@@ -78,7 +78,7 @@ namespace Jde::DB::MySql{
 	}
 
 //https://dev.mysql.com/doc/refman/8.0/en/c-api-prepared-call-statements.html
-	α Execute( str cs, string&& sql, const vector<object>* pParameters, RowΛ* pFunction, bool proc, SL sl, bool log=true )ε->uint{
+	α Execute( str cs, string&& sql, const vector<object>* pParameters, const RowΛ* pFunction, bool proc, SL sl, bool log=true )ε->uint{
 		var fullSql = proc ? Jde::format( "call {}", move(sql) ) : move( sql );
 		if( log )
 			DBLOG( fullSql, pParameters );
@@ -88,9 +88,10 @@ namespace Jde::DB::MySql{
 			for( var& parameter : *pParameters )
 				statement.bind( ToMySqlValue(parameter) );
 		}
+		mysqlx::SqlResult result;
 		try{
-			auto result = statement.execute();
-			if( pFunction ){
+			result = statement.execute();
+			if( pFunction && result.hasData() ){
 				auto rows = result.fetchAll();
 				for( const mysqlx::Row& row : rows )
 					(*pFunction)( MySqlRow(row) );
@@ -99,7 +100,12 @@ namespace Jde::DB::MySql{
 		catch( ::mysqlx::Error& e ){
 			throw DBException{ fullSql, pParameters, e.what(), sl };
 		}
-		return 1;//wari
+		try{
+			return result.getAffectedItemsCount();
+		}
+		catch( ::mysqlx::Error& e ){//Only available after end of query execute
+			return 0;
+		}
 	}
 	α Select( str cs, str sql, RowΛ f, const vector<object>* pValues, SL sl, bool log=true )ε->uint{
 		mysqlx::Session session = Session( cs );
@@ -128,7 +134,7 @@ namespace Jde::DB::MySql{
 	α MySqlDataSource::Execute( string sql, const vector<object>& parameters, SL sl )ε->uint{
 		return Execute( move(sql), &parameters, nullptr, false, sl );
 	}
-	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, RowΛ* f, bool proc, SL sl )ε->uint{
+	α MySqlDataSource::Execute( string sql, const vector<object>* pParams, const RowΛ* f, bool proc, SL sl )ε->uint{
 		return MySql::Execute( CS(), move(sql), pParams, f, proc, sl );
 	}
 
@@ -148,17 +154,21 @@ namespace Jde::DB::MySql{
 	}
 
 	α MySqlDataSource::SelectCo( ISelect* pAwait, string sql_, vector<object>&& params_, SL sl )ι->up<IAwait>{
-		return mu<PoolAwait>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this](){
+		return mu<PoolAwait>( [pAwait, sql{move(sql_)}, params=move(params_), sl, this]()ε{
 			auto rowΛ = [pAwait]( const IRow& r )ε{ pAwait->OnRow(r); };
 			Select( sql, rowΛ, &params, sl );
 		});
 	}
 	α MySqlDataSource::ExecuteCo( string sql_, const vector<object> p, bool proc_, SL sl )ι->up<IAwait>{
-		return mu<TPoolAwait<uint>>( [sql=move(sql_), params=move(p), sl, proc=proc_, this](){
+		return mu<TPoolAwait<uint>>( [sql=move(sql_), params=move(p), sl, proc=proc_, this]()ε{
 			return mu<uint>( Execute(move(sql), &params, nullptr, proc, sl) );
 		});
 	}
-
+	α MySqlDataSource::ExecuteCo( string sql_, vector<object> p, RowΛ f, bool proc_, SL sl )ε->up<IAwait>{
+		return mu<TPoolAwait<uint>>( [sql=move(sql_), params=move(p), sl, proc=proc_, func=f, this]()ε{
+			return mu<uint>( Execute(move(sql), &params, &func, proc, sl) );
+		}, "ExecuteCo", sl );
+	}
 	α MySqlDataSource::ExecuteNoLog( string sql, const std::vector<object>* pParameters, RowΛ* f, bool proc, SL sl )ε->uint{
 		return MySql::Execute( CS(), move(sql), pParameters, f, proc, sl, false );
 	}
