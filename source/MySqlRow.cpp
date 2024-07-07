@@ -69,7 +69,7 @@ namespace Jde::DB::MySql
 		else if( type==mysqlx::Value::Type::DOUBLE )
 			v = object{ value.get<double>() };
 		else
-			throw Exception{ sl, ELogLevel::Debug, "{} object not implemented", value.getType() };
+			throw Exception{ sl, ELogLevel::Debug, "{} object not implemented", (uint)value.getType() };
 		return v;
 	}
 
