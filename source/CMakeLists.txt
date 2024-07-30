@@ -4,8 +4,6 @@ set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
 include(common)
 #######################################################
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
-#find_package(ZLIB)
-
 
 include_directories( "${cmakeLibraryPath}/mysql-connector-cpp/include/mysqlx" )
 link_directories( debug ${cmakeLibraryPath}/mysql-connector-cpp/lib64/debug optimized ${cmakeLibraryPath}/mysql-connector-cpp/lib64/release )
@@ -20,13 +18,12 @@ target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized fmt::libf
 #######################################################
 target_precompile_headers( ${CMAKE_PROJECT_NAME}
   PRIVATE
+	<xdevapi.h>
 	<vector>
 	<boost/crc.hpp>
 	<boost/system/error_code.hpp>
 	<nlohmann/json.hpp>
 	<jde/TypeDefs.h>
-	<jde/Exception.h>
 	"../../Framework/source/DateTime.h"
 	<jde/Str.h>
-	<xdevapi.h>
 )

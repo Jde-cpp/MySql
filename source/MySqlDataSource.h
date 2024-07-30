@@ -1,5 +1,6 @@
 #pragma once
 #include "Exports.h"
+#include <jde/Exception.h> //undef THROW
 #include "../../Framework/source/db/DataType.h"
 #include "../../Framework/source/db/DataSource.h"
 
