@@ -101,7 +101,7 @@ namespace Jde::DB::MySql{
 			throw DBException{ fullSql, pParameters, e.what(), sl };
 		}
 		try{
-			return result.getAffectedItemsCount();
+			return proc || result.hasData() ? 0 : result.getAffectedItemsCount();
 		}
 		catch( ::mysqlx::Error& e ){//Only available after end of query execute
 			return 0;
