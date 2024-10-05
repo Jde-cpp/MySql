@@ -1,8 +1,8 @@
 #include "MySqlDataSource.h"
 #include "MySqlRow.h"
-#include "../../Framework/source/db/DBException.h"
+#include <jde/db/DBException.h>
 #include "MySqlSchemaProc.h"
-#include "../../Framework/source/db/Database.h"
+#include <jde/db/Database.h>
 
 #define var const auto
 
@@ -164,7 +164,7 @@ namespace Jde::DB::MySql{
 			return mu<uint>( Execute(move(sql), &params, nullptr, proc, sl) );
 		});
 	}
-	α MySqlDataSource::ExecuteCo( string sql_, vector<object> p, RowΛ f, bool proc_, SL sl )ε->up<IAwait>{
+	α MySqlDataSource::ExecuteCo( string sql_, vector<object> p, bool proc_, RowΛ f, SL sl )ε->up<IAwait>{
 		return mu<TPoolAwait<uint>>( [sql=move(sql_), params=move(p), sl, proc=proc_, func=f, this]()ε{
 			return mu<uint>( Execute(move(sql), &params, &func, proc, sl) );
 		}, "ExecuteCo", sl );

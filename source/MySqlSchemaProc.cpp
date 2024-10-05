@@ -1,8 +1,8 @@
 #include "MySqlSchemaProc.h"
 #include "MySqlDataSource.h"
 #include "MySqlStatements.h"
-#include "../../Framework/source/db/Row.h"
-#include "../../Framework/source/db/Syntax.h"
+#include <jde/db/Row.h>
+#include <jde/db/syntax/Syntax.h>
 #define var const auto
 
 namespace Jde::DB::MySql{
@@ -38,7 +38,7 @@ namespace Jde::DB::MySql{
 			var tableName = row.GetString(i++); var indexName = row.GetString(i++); var columnName = row.GetString(i++); var unique = row.GetBit(i++)==0;
 
 			//var ordinal = row.GetUInt(i++); var dflt = row.GetString(i++);  //var primaryKey = row.GetBit(i);
-			vector<SchemaName>* pColumns;
+			vector<string>* pColumns;
 			auto pExisting = std::find_if( indexes.begin(), indexes.end(), [&](auto index){ return index.Name==indexName && index.TableName==tableName; } );
 			if( pExisting==indexes.end() ){
 				bool clustered = false;//Boolean.Parse( row["CLUSTERED"].ToString() );

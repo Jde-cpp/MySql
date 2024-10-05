@@ -1,6 +1,6 @@
 #include "MySqlRow.h"
-#include "../../Framework/source/db/DataType.h"
-#include "../../Framework/source/db/DBException.h"
+#include <jde/db/DataType.h>
+#include <jde/db/DBException.h>
 #include "../../Framework/source/math/MathUtilities.h"
 #define var const auto
 

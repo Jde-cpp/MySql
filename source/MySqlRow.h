@@ -1,15 +1,10 @@
 #pragma once
-//#include "../../../framework/TypeDefs.h"
-//#include "../../types/Schema.h"
-//#include "../../DataType.h"
-#include "../../Framework/source/db/DataSource.h"
-#include "../../Framework/source/db/Row.h"
+#include <jde/db/DataSource.h>
+#include <jde/db/Row.h>
 
 
-namespace Jde::DB::MySql
-{
-	struct MySqlRow : public IRow
-	{
+namespace Jde::DB::MySql{
+	struct MySqlRow : public IRow{
 		MySqlRow( const mysqlx::Row& row );
 		α operator[]( uint position )const noexcept(false)->object override;
 		α GetCIString( uint position, SRCE )const noexcept(false)->CIString override;

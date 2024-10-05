@@ -1,9 +1,9 @@
 #pragma once
 #undef THROW
 #include <jde/Exception.h>
-#include "../../Framework/source/db/types/Schema.h"
-#include "../../Framework/source/db/types/Table.h"
-#include "../../Framework/source/db/SchemaProc.h"
+#include <jde/db/metadata/Schema.h>
+#include <jde/db/metadata/Table.h>
+#include <jde/db/metadata/SchemaProc.h>
 
 namespace Jde::DB{ struct IDataSource; }
 

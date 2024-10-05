@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.16)
-project( Jde.MySql )
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Public/build )
+cmake_minimum_required(VERSION 3.20.0)
+set( CMAKE_MODULE_PATH $ENV{JDE_DIR}/Public/build )
 include(common)
+findBoost()
+project( Jde.MySql )
+include(compiler)
+
 #######################################################
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
 
